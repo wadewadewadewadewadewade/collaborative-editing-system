@@ -1,8 +1,7 @@
 import { IMutation } from './mutations';
 import type { NextApiRequest, NextApiResponse } from 'next'
 import cors, { runMiddleware } from '../../utils/cors'
-import db from '../../utils/db'
-import { deleteCollection } from '../../utils/db';
+import db, { addToCollection, deleteCollection, getCollection } from '../../utils/db';
 
 export interface IConversation {
   id: string,
@@ -20,8 +19,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   }
   switch (req.method) {
     case 'GET':
-      const conversationsCollection = await db.collection('conversations').orderBy('created', 'desc').get()
-      const conversations = conversationsCollection.docs.map(entry => { return {...entry.data(), id: entry.id} }) as Array<IConversation>
       /* const conversation: IConversation = {
         id: '1',
         lastMutation: {
@@ -41,7 +38,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         text: 'test'
       }
       const conversations: IConversations = [conversation] */
-      res.status(200).json(conversations)
+      res.status(200).json(await getCollection<IConversation>(db, 'conversations'))
       break
     case 'DELETE':
       try {
@@ -54,8 +51,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       break
     case 'POST':
       try {
-        const result = await db.collection('conversations').add({ text: '' })
-        response.msg = result.id
+        response.msg = await addToCollection(db, 'conversations', { text: '' })
       } catch (ex: any) {
         response.ok = false
         response.msg = JSON.stringify(ex)

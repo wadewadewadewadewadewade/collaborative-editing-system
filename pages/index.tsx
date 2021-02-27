@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import styles from '../styles/Home.module.css'
 import { GetStaticProps } from 'next'
 import { IConversations, IConversation } from './api/conversations'
+import db, { getCollection } from '../utils/db'
 
 const ConversationControls = dynamic(() => import('../components/ConversationControls'))
 
@@ -12,8 +13,7 @@ const ConversationControls = dynamic(() => import('../components/ConversationCon
 // started at 2021-02-27 08:00 PST
 
 export const getStaticProps: GetStaticProps = async () => {
-  const res = await fetch(`${process.env.HOST}/conversations`)
-  const conversations: IConversations = await res.json()
+  const conversations: IConversations = await getCollection<IConversation>(db, 'conversations')
 
   return {
     props: {

@@ -2,7 +2,7 @@ import { IMutation } from './../mutations';
 import { IConversation } from '../conversations';
 import type { NextApiRequest, NextApiResponse } from 'next'
 import cors, { runMiddleware } from '../../../utils/cors'
-import db from '../../../utils/db'
+import db, { getCollection, getCollectionItem } from '../../../utils/db'
 
 export interface IDeleteResponse {
   msg?: string
@@ -16,11 +16,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   } = req
   switch (req.method) {
     case 'GET':
-      const conversationDoc = await db.collection('conversations').doc(id as string).get()
-      const conversation = {...conversationDoc.data(), id: id as string} as IConversation;
-      const mutationsCollection = await db.collection('mutations').where('conversationId', '==', conversation.id).orderBy('created', 'desc').limit(1).get();
-      const lastMutation = mutationsCollection.docs.map(entry => { return {...entry.data(), id: entry.id} })[0] as IMutation;
-      conversation.lastMutation = lastMutation
+      const conversation = await getCollectionItem<IConversation>(db, 'conversations', id as string)
+      const mutationListOf1 = await getCollection<IMutation>(db, 'mutations', ['conversationId', '==', conversation.id], 1)
+      conversation.lastMutation = mutationListOf1[0]
       /* const conversation: IConversation = {
         id: '1',
         lastMutation: {
