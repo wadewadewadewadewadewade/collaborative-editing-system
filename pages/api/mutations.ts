@@ -1,7 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import cors, { runMiddleware } from '../../utils/cors'
+import db from '../../utils/db'
 
 export interface IMutation {
+  id?: string
   author: 'alice' | 'bob'
   conversationId: string
   data: {
@@ -20,7 +22,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   await runMiddleware(req, res, cors)
   switch (req.method) {
     case 'GET':
-      res.status(400).json('bad request')
+      const mutationsCollection = await db.collection('mutations').orderBy('created', 'desc').get();
+      const mutations = mutationsCollection.docs.map(entry => { return {...entry.data(), id: entry.id} }) as Array<IMutation>;
+      res.status(200).json(mutations)
       break
     case 'POST':
       const response = {
@@ -30,7 +34,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       }
       try {
         const mutation: IMutation = req.body
-        response.text = mutation.data.text
+        const result = await db.collection('mutations').add(mutation)
+        response.msg = result.id
       } catch (ex: any) {
         response.ok = false
         response.msg = JSON.stringify(ex)

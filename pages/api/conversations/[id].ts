@@ -1,6 +1,8 @@
+import { IMutation } from './../mutations';
 import { IConversation } from '../conversations';
 import type { NextApiRequest, NextApiResponse } from 'next'
 import cors, { runMiddleware } from '../../../utils/cors'
+import db from '../../../utils/db'
 
 export interface IDeleteResponse {
   msg?: string
@@ -9,9 +11,17 @@ export interface IDeleteResponse {
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   await runMiddleware(req, res, cors)
+  const {
+    query: { id }
+  } = req
   switch (req.method) {
     case 'GET':
-      const conversation: IConversation = {
+      const conversationDoc = await db.collection('conversations').doc(id as string).get()
+      const conversation = {...conversationDoc.data(), id: id as string} as IConversation;
+      const mutationsCollection = await db.collection('mutations').where('conversationId', '==', conversation.id).orderBy('created', 'desc').limit(1).get();
+      const lastMutation = mutationsCollection.docs.map(entry => { return {...entry.data(), id: entry.id} })[0] as IMutation;
+      conversation.lastMutation = lastMutation
+      /* const conversation: IConversation = {
         id: '1',
         lastMutation: {
           author: 'alice',
@@ -28,7 +38,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           }
         },
         text: 'test'
-      }
+      } */
       res.status(200).json(conversation)
       break
     case 'DELETE':
@@ -37,7 +47,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         ok: true
       }
       try {
-        // do delete here
+        await db.collection('conversations').doc(id as string).delete()
       } catch (ex: any) {
         response.ok = false
         response.msg = JSON.stringify(ex)
