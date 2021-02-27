@@ -5,22 +5,25 @@ import styles from '../styles/Home.module.css'
 import { GetStaticProps } from 'next'
 import { IConversation } from './api/conversations'
 import { useRouter } from 'next/router'
+import db from '../utils/db'
+import { IMutation } from './api/mutations'
 
 const ConversationControls = dynamic(() => import('../components/ConversationControls'))
 
 export async function getStaticPaths() {
+  const conversationsCollection = await db.collection('conversations').orderBy('created', 'desc').get();
+  const conversations = conversationsCollection.docs.map(entry => { return {...entry.data(), id: entry.id} }) as Array<IConversation>;
+  const conversationPaths = conversations.map((conv) => `/${conv.id}`)
   return {
-    paths: ['/1'],
+    paths: conversationPaths,
     fallback: false
   }
 }
 
 export const getStaticProps: GetStaticProps = async (context) => {
   const { id } = context.params
-  const res = await fetch(`${process.env.HOST}/conversations/${id}`)
-  const conversation: IConversation = await res.json()
-
-  if (!conversation) {
+  const conversationDoc = await db.collection('conversations').doc(id as string).get()
+  if (!conversationDoc.exists) {
     return {
       redirect: {
         destination: '/',
@@ -28,7 +31,10 @@ export const getStaticProps: GetStaticProps = async (context) => {
       },
     }
   }
-
+  const conversation = {...conversationDoc.data(), id: id as string} as IConversation;
+  const mutationsCollection = await db.collection('mutations').where('conversationId', '==', conversation.id).orderBy('created', 'desc').limit(1).get();
+  const lastMutation = mutationsCollection.docs.map(entry => { return {...entry.data(), id: entry.id} })[0] as IMutation;
+  conversation.lastMutation = lastMutation
   return {
     props: {
       conversation

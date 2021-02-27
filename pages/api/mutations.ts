@@ -22,8 +22,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   await runMiddleware(req, res, cors)
   switch (req.method) {
     case 'GET':
-      const mutationsCollection = await db.collection('mutations').orderBy('created', 'desc').get();
-      const mutations = mutationsCollection.docs.map(entry => { return {...entry.data(), id: entry.id} }) as Array<IMutation>;
+      const mutationsCollection = await db.collection('mutations').orderBy('created', 'desc').get()
+      const mutations = mutationsCollection.docs.map(entry => { return {...entry.data(), id: entry.id} }) as Array<IMutation>
       res.status(200).json(mutations)
       break
     case 'POST':

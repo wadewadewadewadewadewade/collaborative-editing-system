@@ -20,8 +20,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   }
   switch (req.method) {
     case 'GET':
-      const conversationsCollection = await db.collection('conversations').orderBy('created', 'desc').get();
-      const conversations = conversationsCollection.docs.map(entry => { return {...entry.data(), id: entry.id} }) as Array<IConversation>;
+      const conversationsCollection = await db.collection('conversations').orderBy('created', 'desc').get()
+      const conversations = conversationsCollection.docs.map(entry => { return {...entry.data(), id: entry.id} }) as Array<IConversation>
       /* const conversation: IConversation = {
         id: '1',
         lastMutation: {
