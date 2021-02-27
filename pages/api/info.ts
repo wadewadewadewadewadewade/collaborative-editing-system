@@ -12,7 +12,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           email: 'wadessocool@gmail.com'
         },
         frontend: {
-          url: process.env.HOST
+          url: 'https://collaborative-editing-system.vercel.app/'
         },
         language: 'node.js',
         sources: 'https://github.com/wadewadewadewadewadewade/collaborative-editing-system',
