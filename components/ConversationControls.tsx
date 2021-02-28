@@ -40,11 +40,11 @@ export default function ConversationControls({
     onDel = onDelete
   }
   return (
-    <span className="controls">
+    <span className={styles.controls}>
       <span>{id}</span>
       <span
-          className={`${styles.card} buttons-favorite`}
-          onClick={(e) => e.stopPropagation()}
+        className={`${styles.card} ${styles.buttonsFavorite}`}
+        onClick={(e) => e.stopPropagation()}
       >
         <input
           id={favoriteId}
@@ -60,7 +60,7 @@ export default function ConversationControls({
         >Favorite</label>
       </span>
       <button
-        className={`${styles.card} buttons-delete`}
+        className={`${styles.card} ${styles.buttonsDelete}`}
         type="button"
         onClick={(e) => {
           e.stopPropagation()

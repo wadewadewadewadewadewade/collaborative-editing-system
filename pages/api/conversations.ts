@@ -50,8 +50,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       res.status(204).json(response)
       break
     case 'POST':
+      const { text } = req.body
       try {
-        response.msg = await addToCollection(db, 'conversations', { text: '' })
+        response.msg = await addToCollection(db, 'conversations', { text })
       } catch (ex: any) {
         response.ok = false
         response.msg = JSON.stringify(ex)

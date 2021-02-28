@@ -3,16 +3,16 @@ import dynamic from 'next/dynamic'
 import BackButton from '../components/BackButton'
 import styles from '../styles/Home.module.css'
 import { GetStaticProps } from 'next'
-import { IConversation } from './api/conversations'
+import { IConversation, IConversations } from './api/conversations'
 import { useRouter } from 'next/router'
 import db, { getCollectionItem, getCollection } from '../utils/db'
 import { IMutation } from './api/mutations'
+import TextArea from '../components/TextArea'
 
 const ConversationControls = dynamic(() => import('../components/ConversationControls'))
 
 export async function getStaticPaths() {
-  const conversationsCollection = await db.collection('conversations').orderBy('created', 'desc').get();
-  const conversations = conversationsCollection.docs.map(entry => { return {...entry.data(), id: entry.id} }) as Array<IConversation>;
+  const conversations: IConversations = await getCollection<IConversation>(db, 'conversations')
   const conversationPaths = conversations.map((conv) => `/${conv.id}`)
   return {
     paths: conversationPaths,
@@ -32,12 +32,26 @@ export const getStaticProps: GetStaticProps = async (context) => {
     }
   }
   const mutationListOf1 = await getCollection<IMutation>(db, 'mutations', ['conversationId', '==', conversation.id], 1)
-  conversation.lastMutation = mutationListOf1[0]
+  if (mutationListOf1 && mutationListOf1.length > 0) {
+    conversation.lastMutation = mutationListOf1[0]
+  }
   return {
     props: {
       conversation
     }
   }
+}
+
+const insertMutation = async (data: IMutation) => {
+  const response = await fetch('/mutations', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+  const result = await response.json()
+  return result
 }
 
 export default function Conversation({ conversation }: { conversation: IConversation }) {
@@ -63,12 +77,26 @@ export default function Conversation({ conversation }: { conversation: IConversa
           }} />
         </h2>
 
-        <div className="grow-wrap-body">
-          <label className="grow-wrap-label" htmlFor="conversation_document">Text:</label>
-          <div className="grow-wrap">
-            <textarea id="conversation_document" className="conversation-document" disabled>{conversation.text}</textarea>
-          </div>
-        </div>
+        <TextArea defaultValue={conversation.text} disabled />
+
+        <TextArea label="Last Modification" defaultValue={JSON.stringify(conversation.lastMutation)} disabled />
+
+        {/*<TextArea
+          label={'Demo Text'}
+          onWord={async (word) => {
+
+          }}
+        />*/}
+
+{/*
+        <button onClick={(e) => {
+          insertMutation({conversationId:conversation.id,"author":"bob","data":{"index":0,"text":"The","type":"insert"},"origin":{"alice":0,"bob":0}})
+        }}>B(0, 0)INS0:'The'</button>
+
+        <button onClick={(e) => {
+          insertMutation({conversationId:conversation.id,"author":"bob","data":{"index":3,"text":" house","type":"insert"},"origin":{"alice":0,"bob":1}})
+        }}>B(1, 0)INS3:' house'</button>
+*/}
 
       </main>
 

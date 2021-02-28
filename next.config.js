@@ -11,7 +11,7 @@ module.exports = {
       },
       {
         source: '/mutations',
-        destination: '/api/info'
+        destination: '/api/mutations'
       },
       {
         source: '/conversations',

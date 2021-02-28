@@ -121,9 +121,150 @@
   height: 1em;
 }
 
+.loading-indicator {
+  position: fixed;
+  top:0;
+  bottom:0;
+  left:0;
+  right:0;
+  display:flex;
+  justify-content: center;
+  align-items: center;
+}
+
+h2 .controls {
+  margin-left: 1rem;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.controls span, .controls button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top:0;
+  margin-bottom: 0;
+  padding:0;
+}
+
+.controls span:focus, .controls button:focus {
+  outline: none;
+}
+
+.controls span:first-child {
+  min-width: 100px;
+  justify-content: flex-start;
+  align-items: center;
+  font-size: 12pt;
+}
+
+.buttonsBack {
+  font-size: 30pt;
+  margin-right:3rem;
+}
+
+.buttonsAdd {
+  margin-left:3rem;
+}
+
+.buttonsDelete, .buttonsFavorite, .buttonsAdd {
+  display:flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.buttonsFavorite input {
+  display:none;
+}
+
+.buttonsFavorite label {
+  font-size: 0;
+  padding:1.5rem;
+}
+
+.buttonsFavorite label:before {
+  content: '☆';
+  font-size:20pt;
+}
+
+.buttonsFavorite input:checked + label:before {
+  content: '★';
+}
+
+.buttonsDelete, .buttonsAdd {
+  font-size:20pt;
+  background: transparent;
+  padding:1.5rem !important;
+}
+
+.buttonsDelete:before {
+  content: '🗑';
+}
+
+.buttonsDelete:focus {
+  outline:none;
+}
+
+.conversation-document {
+  width:100%;
+
+}
+
+/* https://css-tricks.com/the-cleanest-trick-for-autogrowing-textareas/ */
+.growWrap {
+  /* easy way to plop the elements on top of each other and have them both sized based on the tallest one's height */
+  display: grid;
+}
+.growWrap::after {
+  /* Note the weird space! Needed to preventy jumpy behavior */
+  content: attr(data-replicated-value) " ";
+
+  /* This is how textarea text behaves */
+  white-space: pre-wrap;
+
+  /* Hidden from view, clicks, and screen readers */
+  visibility: hidden;
+}
+.growWrap > textarea {
+  /* You could leave this, but after a user resizes, then it ruins the auto sizing */
+  resize: none;
+
+  /* Firefox shows scrollbar on growth, you can hide like this. */
+  overflow: hidden;
+}
+.growWrap > textarea,
+.growWrap::after {
+  /* Identical styling required!! */
+  border: 1px solid black;
+  padding: 0.5rem;
+  font: inherit;
+
+  /* Place on top of each other */
+  grid-area: 1 / 1 / 2 / 2;
+}
+
+.growWrapBody {
+  width:100%;
+  font: 1rem/1.4 system-ui, sans-serif;
+}
+
+.growWrapLabel {
+  display: block;
+}
+
 @media (max-width: 600px) {
   .grid {
     width: 100%;
     flex-direction: column;
+  }
+}
+
+@media (max-width: 750px) {
+  .subtitle > span:not(.controls) {
+    display:none
   }
 }

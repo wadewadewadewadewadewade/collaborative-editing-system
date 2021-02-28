@@ -1,20 +1,25 @@
+import { useContext } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import dynamic from 'next/dynamic'
 import styles from '../styles/Home.module.css'
 import { GetStaticProps } from 'next'
 import { IConversations, IConversation } from './api/conversations'
 import db, { getCollection } from '../utils/db'
+import { LoadingIndicatorContext } from './_app'
 
 const ConversationControls = dynamic(() => import('../components/ConversationControls'))
 
 // started at 2021-02-26 14:30 PST
-// stopped at 2021-02-26 18:00 PST
+// stopped at 2021-02-26 18:00 PST - 3.5
 // started at 2021-02-27 08:00 PST
+// stopped at 2021-02-27 11:45 PST - 3.75
+// started at 2021-02-27 17:30 PST
+// stopped at 2021-02-27 18:00 PST - 0.5
 
 export const getStaticProps: GetStaticProps = async () => {
   const conversations: IConversations = await getCollection<IConversation>(db, 'conversations')
-
   return {
     props: {
       conversations
@@ -27,6 +32,8 @@ export default function Conversations({
 }: {
   conversations: IConversations
 }) {
+  const router = useRouter()
+  const { setIsLoading } = useContext(LoadingIndicatorContext)
   return (
     <div className={styles.container}>
       <Head>
@@ -40,7 +47,24 @@ export default function Conversations({
         </h1>
 
         <h2 className={styles.subtitle}>
-          Conversations
+          <span>Conversations</span>
+          <button
+            className={`${styles.card} buttons-add`}
+            onClick={async (e) => {
+              e.preventDefault();
+              setIsLoading(true);
+              const response = await fetch('/conversations', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text: '' })
+              })
+              const { msg: id } = await response.json()
+              await router.push(`/${id}`)
+              setIsLoading(false)
+            }}
+          >+</button>
         </h2>
 
         {conversations && <ol className={styles.grid}>

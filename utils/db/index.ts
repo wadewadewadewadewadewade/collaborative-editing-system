@@ -37,7 +37,9 @@ async function deleteQueryBatch(db: FirebaseFirestore.Firestore, query: Firebase
   });
 }
 
-export async function deleteCollection(db: FirebaseFirestore.Firestore, collectionPath: string, batchSize: number) {
+type PathType = 'conversations' | 'mutations'
+
+export async function deleteCollection(db: FirebaseFirestore.Firestore, collectionPath: PathType, batchSize: number) {
   const collectionRef = db.collection(collectionPath);
   const query = collectionRef.orderBy('__name__').limit(batchSize);
 
@@ -46,7 +48,7 @@ export async function deleteCollection(db: FirebaseFirestore.Firestore, collecti
   });
 }
 
-export async function getCollection<T>(db : FirebaseFirestore.Firestore, path: string, where: [fieldPath: string | FirebaseFirestore.FieldPath, opStr: FirebaseFirestore.WhereFilterOp, value: any] = undefined, limit = -1) {
+export async function getCollection<T>(db : FirebaseFirestore.Firestore, path: PathType, where: [fieldPath: string | FirebaseFirestore.FieldPath, opStr: FirebaseFirestore.WhereFilterOp, value: any] = undefined, limit = -1) {
   let collectionRef = null
   if (where && limit > 0) {
     collectionRef = await db.collection(path).orderBy('created', 'desc').where(...where).limit(limit).get()
@@ -67,12 +69,12 @@ export async function getCollection<T>(db : FirebaseFirestore.Firestore, path: s
   return null
 }
 
-export async function addToCollection(db : FirebaseFirestore.Firestore, path: string, data: any) {
+export async function addToCollection(db : FirebaseFirestore.Firestore, path: PathType, data: any) {
   const result = await db.collection(path).add({...data, created: new Date().toISOString() })
   return result.id
 }
 
-export async function getCollectionItem<T>(db : FirebaseFirestore.Firestore, path: string, id: string) {
+export async function getCollectionItem<T>(db : FirebaseFirestore.Firestore, path: PathType, id: string) {
   const doc = await db.collection(path).doc(id).get()
   if (doc.exists) {
     const item = {...doc.data(), id: doc.id } as unknown
@@ -81,6 +83,6 @@ export async function getCollectionItem<T>(db : FirebaseFirestore.Firestore, pat
   return null
 }
 
-export async function deleteCollectionItem(db : FirebaseFirestore.Firestore, path: string, id: string) {
+export async function deleteCollectionItem(db : FirebaseFirestore.Firestore, path: PathType, id: string) {
   await db.collection(path).doc(id).delete()
 }
