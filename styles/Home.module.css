@@ -211,7 +211,29 @@ h2 .controls {
 
 .conversation-document {
   width:100%;
+}
 
+.preformatted:empty {
+  display:none;
+}
+
+.buttons, .preformatted {
+  list-style:none;
+  display:flex;
+  margin:0 0 1rem;
+  padding:0;
+  flex-wrap: wrap;
+  width:100%;
+}
+.buttons:before, .preformatted:before {
+  content:attr(data-title);
+  display:flex;
+  font-weight:bold;
+  width:100%;
+}
+.buttons li {
+  display:flex;
+  margin-right: 1rem;
 }
 
 /* https://css-tricks.com/the-cleanest-trick-for-autogrowing-textareas/ */

@@ -15,9 +15,10 @@ a {
   box-sizing: border-box;
 }
 
-pre {
+pre, textarea {
   display:flex;
   width:100%;
   padding:0.5em;
-  border:solid 1px #999
+  border:solid 1px #999;
+  min-height:2.3em;
 }

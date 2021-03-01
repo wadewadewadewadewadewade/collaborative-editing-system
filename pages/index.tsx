@@ -23,6 +23,10 @@ const ConversationControls = dynamic(() => import('../components/ConversationCon
 // stopped at 2021-02-28 17:00 PST - 3 (stil owrking on listner)
 // started at 2021-02-28 19:00 PST
 // stopped at 2021-02-28 21:00 PST - 2 (gave up and switch to long-polling)
+// started at 2021-03-01 06:30 PST
+// stopped at 2021-03-01 08:00 PST - 2.5
+// started at 2021-03-01 11:00 PST
+// stopped at 2021-03-01 
 
 export const getStaticProps: GetStaticProps = async () => {
   const conversations: IConversations = await getConversations(db)
@@ -79,7 +83,7 @@ export default function Conversations({
             <li key={conversation.id} className={styles.card}>
               <Link href={`/${conversation.id}`}>
                 <a>
-                  <ConversationControls id={conversation.id} onDelete={(res) => {
+                  <ConversationControls id={conversation.id} onDelete={() => {
                     if (res.ok) {
                       conversations = conversations.filter((conv) => conv.id !== conversation.id)
                     }

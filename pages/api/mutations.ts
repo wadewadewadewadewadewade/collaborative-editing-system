@@ -7,8 +7,9 @@ export interface IMutation {
   author: 'alice' | 'bob'
   conversationId: string
   data: {
-    index: number,
-    text: string,
+    index: number
+    text?: string // delete has no text
+    length?: number // insert has no length
     type: 'insert' | 'delete'
   }
   origin: {

@@ -105,7 +105,27 @@ export async function addMutation(db : FirebaseFirestore.Firestore, id: string, 
   if (!conversationData.exists) {
     return undefined
   }
-  const result = await conversationRef.collection('mutations').add({...mutation, created: new Date().toISOString() })
+  const conversation = {...conversationData.data(), id: conversationData.id} as IConversation
+  const { lastMutation } = conversation;
+  // adjust next mutation if origin matches last mutation
+  if (lastMutation && (lastMutation.origin.bob === mutation.origin.bob && lastMutation.origin.alice === mutation.origin.alice)) {
+    // two came in at the same time so transform this one
+    if (mutation.data.index >= lastMutation.data.index) {
+      if (lastMutation.data.type === 'insert') {
+        mutation.data.index += lastMutation.data.index + 1
+      } else {
+        mutation.data.index -= lastMutation.data.index
+      }
+    }
+    //and adjust the origin
+    mutation.origin[mutation.author]++
+  }
+  // the above transofrm doesn't ajust for older mutations than simeltanious
+  // coming in late, like someone that was offline for a long period of time...
+  const result = await conversationRef.collection('mutations').add({
+    ...mutation,
+    created: new Date().toISOString()
+  })
   const text = await getConversationText(db, id)
   await conversationRef.update({text, lastMutation: mutation})
   return result.id
@@ -121,15 +141,17 @@ export async function deleteMutation(db : FirebaseFirestore.Firestore, conversat
 
 export async function getConversationText(db : FirebaseFirestore.Firestore, id: string) {
   const mutations = await getMutations(db, id)
+  mutations.sort((a,b) => {
+    return a.origin.bob - b.origin.bob || a.origin.alice - b.origin.alice
+  })
   // build new text
   let text = ''
-  mutations.reverse()
   mutations.forEach((mut) => {
     if (mut.data.type === 'insert') {
       const after = text.slice(mut.data.index)
       text = text.slice(0, mut.data.index) + mut.data.text + after
     } else if (mut.data.type === 'delete') {
-      const after = text.slice(mut.data.index + mut.data.text.length)
+      const after = text.slice(mut.data.index + mut.data.length)
       text = text.slice(0, mut.data.index) + after
     }
   })

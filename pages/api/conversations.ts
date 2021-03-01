@@ -4,7 +4,8 @@ import cors, { runMiddleware } from '../../utils/cors'
 import db, { addConversation, deleteCollection, getConversations } from '../../utils/db';
 
 export interface IConversation {
-  id: string,
+  id: string
+  mutations: number
   lastMutation: IMutation
   text: string
 }
@@ -19,25 +20,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   }
   switch (req.method) {
     case 'GET':
-      /* const conversation: IConversation = {
-        id: '1',
-        lastMutation: {
-          author: 'alice',
-          conversationId: '1',
-          data: {
-            index: 1,
-            length: 4,
-            text: 'wade',
-            type: 'insert'
-          },
-          origin: {
-            alice: 5,
-            bob: 0
-          }
-        },
-        text: 'test'
-      }
-      const conversations: IConversations = [conversation] */
       res.status(200).json(await getConversations(db))
       break
     case 'DELETE':
