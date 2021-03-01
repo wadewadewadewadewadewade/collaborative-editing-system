@@ -84,9 +84,7 @@ export default function Conversations({
               <Link href={`/${conversation.id}`}>
                 <a>
                   <ConversationControls id={conversation.id} onDelete={() => {
-                    if (res.ok) {
-                      conversations = conversations.filter((conv) => conv.id !== conversation.id)
-                    }
+                    conversations = conversations.filter((conv) => conv.id !== conversation.id)
                   }} />
                 </a>
               </Link>
