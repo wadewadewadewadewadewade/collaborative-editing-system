@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic'
 import styles from '../styles/Home.module.css'
 import { GetStaticProps } from 'next'
 import { IConversations, IConversation } from './api/conversations'
-import db, { getCollection } from '../utils/db'
+import db, { getConversations } from '../utils/db'
 import { LoadingIndicatorContext } from './_app'
 
 const ConversationControls = dynamic(() => import('../components/ConversationControls'))
@@ -16,10 +16,14 @@ const ConversationControls = dynamic(() => import('../components/ConversationCon
 // started at 2021-02-27 08:00 PST
 // stopped at 2021-02-27 11:45 PST - 3.75
 // started at 2021-02-27 17:30 PST
-// stopped at 2021-02-27 18:00 PST - 0.5
+// stopped at 2021-02-27 20:30 PST - 3
+// started at 2021-02-28 06:00 PST
+// stopped at 2021-02-28 08:00 PST - 2 (got nothing done on listeners)
+// started at 2021-02-28 14:00 PST
+// stopped at 2021-02-28 
 
 export const getStaticProps: GetStaticProps = async () => {
-  const conversations: IConversations = await getCollection<IConversation>(db, 'conversations')
+  const conversations: IConversations = await getConversations(db)
   return {
     props: {
       conversations

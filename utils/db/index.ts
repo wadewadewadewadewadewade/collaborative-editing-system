@@ -1,4 +1,6 @@
-import admin from 'firebase-admin';
+import { IMutation } from './../../pages/api/mutations'
+import { IConversation } from './../../pages/api/conversations'
+import admin from 'firebase-admin'
 
 if (!admin.apps.length) {
   const serviceAccount = JSON.parse(process.env.firestoreServiceAccountKey) as admin.ServiceAccount
@@ -11,7 +13,6 @@ if (!admin.apps.length) {
   }
 }
 export default admin.firestore()
-
 
 async function deleteQueryBatch(db: FirebaseFirestore.Firestore, query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData>, resolve: Function) {
   const snapshot = await query.get();
@@ -37,7 +38,7 @@ async function deleteQueryBatch(db: FirebaseFirestore.Firestore, query: Firebase
   });
 }
 
-type PathType = 'conversations' | 'mutations'
+type PathType = 'conversations'
 
 export async function deleteCollection(db: FirebaseFirestore.Firestore, collectionPath: PathType, batchSize: number) {
   const collectionRef = db.collection(collectionPath);
@@ -48,41 +49,91 @@ export async function deleteCollection(db: FirebaseFirestore.Firestore, collecti
   });
 }
 
-export async function getCollection<T>(db : FirebaseFirestore.Firestore, path: PathType, where: [fieldPath: string | FirebaseFirestore.FieldPath, opStr: FirebaseFirestore.WhereFilterOp, value: any] = undefined, limit = -1) {
-  let collectionRef = null
-  if (where && limit > 0) {
-    collectionRef = await db.collection(path).orderBy('created', 'desc').where(...where).limit(limit).get()
-  } else if (where) {
-    collectionRef = await db.collection(path).orderBy('created', 'desc').where(...where).get()
-  } else if (limit > 0) {
-    collectionRef = await db.collection(path).orderBy('created', 'desc').limit(limit).get()
-  } else {
-    collectionRef = await db.collection(path).orderBy('created', 'desc').get()
-  }
-  if (collectionRef) {
-    const collection = collectionRef.docs.map(entry => {
-      const item = {...entry.data(), id: entry.id } as unknown
-      return item as Array<T>
-    })
-    return collection
-  }
-  return null
+export async function getConversations(db: FirebaseFirestore.Firestore) {
+  const conversationRef = await db.collection('conversations').get()
+  const conversations = conversationRef.docs.map((doc) => {
+    return {...doc.data(), id: doc.id} as IConversation
+  })
+  return conversations
 }
 
-export async function addToCollection(db : FirebaseFirestore.Firestore, path: PathType, data: any) {
-  const result = await db.collection(path).add({...data, created: new Date().toISOString() })
+export async function getMutations(db: FirebaseFirestore.Firestore, id: string) {
+  const conversationRef = db.collection('conversations').doc(id)
+  const conversationData = await conversationRef.get()
+  if (!conversationData.exists) {
+    return undefined
+  }
+  const mutationRef = await conversationRef.collection('mutations').orderBy('created', 'desc').get()
+  const mutations = mutationRef.docs.map((doc) => {
+    return {...doc.data(), id: doc.id} as IMutation
+  })
+  return mutations
+}
+
+export async function getConversation(db: FirebaseFirestore.Firestore, id: string) {
+  const conversationRef = db.collection('conversations').doc(id)
+  const conversationData = await conversationRef.get()
+  if (!conversationData.exists) {
+    return undefined
+  }
+  const conversation = {...conversationData.data(), id: conversationData.id} as IConversation
+  return conversation
+}
+
+export async function getMutation(db: FirebaseFirestore.Firestore, conversationId: string, id: string) {
+  const conversationRef = db.collection('conversations').doc(conversationId)
+  const conversationData = await conversationRef.get()
+  if (!conversationData.exists) {
+    return undefined
+  }
+  const mutationRef = conversationRef.collection('mutations').doc(id)
+  const mutationData = await mutationRef.get()
+  if (!mutationData.exists) {
+    return undefined
+  }
+  return {...mutationData.data(), id: mutationData.id} as IMutation
+}
+
+export async function addConversation(db : FirebaseFirestore.Firestore) {
+  const result = await db.collection('conversations').add({text: '', created: new Date().toISOString() })
   return result.id
 }
 
-export async function getCollectionItem<T>(db : FirebaseFirestore.Firestore, path: PathType, id: string) {
-  const doc = await db.collection(path).doc(id).get()
-  if (doc.exists) {
-    const item = {...doc.data(), id: doc.id } as unknown
-    return item as T
+export async function addMutation(db : FirebaseFirestore.Firestore, id: string, mutation: IMutation) {
+  const conversationRef = db.collection('conversations').doc(id)
+  const conversationData = await conversationRef.get()
+  if (!conversationData.exists) {
+    return undefined
   }
-  return null
+  const result = await conversationRef.collection('mutations').add({...mutation, created: new Date().toISOString() })
+  const text = await getConversationText(db, id)
+  await conversationRef.update({text, lastMutation: mutation})
+  return result.id
 }
 
-export async function deleteCollectionItem(db : FirebaseFirestore.Firestore, path: PathType, id: string) {
-  await db.collection(path).doc(id).delete()
+export async function deleteConversation(db : FirebaseFirestore.Firestore, id: string) {
+  await db.collection('conversations').doc(id).delete()
+}
+
+export async function deleteMutation(db : FirebaseFirestore.Firestore, conversationId: string, id: string) {
+  await db.collection('conversations').doc(conversationId).collection('mutations').doc(id).delete()
+}
+
+export async function getConversationText(db : FirebaseFirestore.Firestore, id: string) {
+  const mutations = await getMutations(db, id)
+  // build new text
+  let text = ''
+  mutations.reverse()
+  mutations.forEach((mut) => {
+    if (mut.data.type === 'insert') {
+      const after = text.slice(mut.data.index)
+      text = text.slice(0, mut.data.index) + mut.data.text + after
+    } else if (mut.data.type === 'delete') {
+      const after = text.slice(mut.data.index + mut.data.text.length)
+      text = text.slice(0, mut.data.index) + after
+    }
+  })
+  // TODO: store this as a snapshot to save calculations in the future, using
+  // the numebr of mutations as the 'version' 
+  return text
 }

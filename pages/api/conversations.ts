@@ -1,7 +1,7 @@
 import { IMutation } from './mutations';
 import type { NextApiRequest, NextApiResponse } from 'next'
 import cors, { runMiddleware } from '../../utils/cors'
-import db, { addToCollection, deleteCollection, getCollection } from '../../utils/db';
+import db, { addConversation, deleteCollection, getConversations } from '../../utils/db';
 
 export interface IConversation {
   id: string,
@@ -38,7 +38,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         text: 'test'
       }
       const conversations: IConversations = [conversation] */
-      res.status(200).json(await getCollection<IConversation>(db, 'conversations'))
+      res.status(200).json(await getConversations(db))
       break
     case 'DELETE':
       try {
@@ -50,9 +50,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       res.status(204).json(response)
       break
     case 'POST':
-      const { text } = req.body
       try {
-        response.msg = await addToCollection(db, 'conversations', { text })
+        response.msg = await addConversation(db)
       } catch (ex: any) {
         response.ok = false
         response.msg = JSON.stringify(ex)
