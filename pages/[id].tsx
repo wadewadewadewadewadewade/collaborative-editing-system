@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Head from 'next/head'
 import dynamic from 'next/dynamic'
 import BackButton from '../components/BackButton'
@@ -8,7 +8,6 @@ import { IConversation, IConversations } from './api/conversations'
 import { useRouter } from 'next/router'
 import db, { getConversations, getConversation } from '../utils/db'
 import { IMutation } from './api/mutations'
-import TextArea from '../components/TextArea'
 
 const ConversationControls = dynamic(() => import('../components/ConversationControls'))
 
@@ -59,18 +58,40 @@ export default function Conversation({
   conversation: IConversation
 }) {
   const router = useRouter()
+  const [text, setText] = useState(conversation.text)
+  let tempText = text // really confused as to why I can't seem to just use setText...
+  const [mutation, setMutation] = useState(JSON.stringify(conversation.lastMutation))
   useEffect(() => {
+    const interval = setInterval(() => {
+      fetch(`/conversations/${conversation.id}`)
+        .then(response => response.json())
+        .then((c: IConversation) => {
+          if (c && c.text !== tempText) {
+            console.log('setting conv', c.text, tempText)
+            setText(c.text)
+            tempText = c.text
+            setMutation(JSON.stringify(c.lastMutation))
+          }
+        })
+    }, 3000)
+    return () => clearInterval(interval)
+  },[conversation.id])
+  /*useEffect(() => {
     const evtSource = new EventSource(`/api/conversations/sockets/${conversation.id}`)
     evtSource.onmessage = function(event) {
-      console.log(event.data)
+      const newText = JSON.parse(event.data).text
+      if (newText !== conversation.text) {
+        setTextDisplay(newText)
+      }
     }
     evtSource.onerror = function(err) {
       console.error("EventSource failed:", err)
     }
+    window && window.addEventListener('beforeunload', () => evtSource.close())
     return () => {
       evtSource.close()
     }
-  },[conversation.id])
+  },[conversation.id])*/
   return (
     <div className={styles.container}>
       
@@ -91,26 +112,22 @@ export default function Conversation({
             router.push('/')
           }} />
         </h2>
+        
+        <pre>{tempText}</pre>
+        <pre>{mutation}</pre>
 
-        <TextArea defaultValue={conversation.text} disabled />
-
-        <TextArea label="Last Modification" defaultValue={JSON.stringify(conversation.lastMutation)} disabled />
-
-        {/*<TextArea
-          label={'Demo Text'}
-          onWord={async (word) => {
-
-          }}
-        />*/}
-{/*}
-        <button onClick={(e) => {
+{/*        <button onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
           insertMutation({conversationId:conversation.id,"author":"bob","data":{"index":0,"text":"The","type":"insert"},"origin":{"alice":0,"bob":0}})
         }}>B(0, 0)INS0:'The'</button>
 
         <button onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
           insertMutation({conversationId:conversation.id,"author":"bob","data":{"index":3,"text":" house","type":"insert"},"origin":{"alice":0,"bob":1}})
         }}>B(1, 0)INS3:' house'</button>
-*/}
+      */}
       </main>
 
       <footer className={styles.footer}>

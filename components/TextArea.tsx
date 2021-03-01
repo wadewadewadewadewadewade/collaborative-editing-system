@@ -4,11 +4,13 @@ import styles from '../styles/Home.module.css'
 let timeout = null
 
 export default function TextArea ({
+  conversationId,
   label,
   defaultValue = '',
   onWord,
   ...rest
 }: DetailedHTMLProps<TextareaHTMLAttributes<HTMLTextAreaElement>, HTMLTextAreaElement> & {
+  conversationId: string,
   label?: string,
   defaultValue?: string,
   onWord?: (word: string) => Promise<void>

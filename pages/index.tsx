@@ -20,7 +20,9 @@ const ConversationControls = dynamic(() => import('../components/ConversationCon
 // started at 2021-02-28 06:00 PST
 // stopped at 2021-02-28 08:00 PST - 2 (got nothing done on listeners)
 // started at 2021-02-28 14:00 PST
-// stopped at 2021-02-28 
+// stopped at 2021-02-28 17:00 PST - 3 (stil owrking on listner)
+// started at 2021-02-28 19:00 PST
+// stopped at 2021-02-28 21:00 PST - 2 (gave up and switch to long-polling)
 
 export const getStaticProps: GetStaticProps = async () => {
   const conversations: IConversations = await getConversations(db)

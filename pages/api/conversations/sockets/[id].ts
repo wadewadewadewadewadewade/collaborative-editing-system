@@ -13,7 +13,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   const conversationId = id as string
 
   let unsubscribe = null
-  console.log(`running ${conversationId}`)
   
   const conversationRef = db.collection('conversations').doc(conversationId)
   const conversationDoc = await conversationRef.get()
@@ -28,10 +27,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     res.writeHead(200, headers)
 
     unsubscribe = conversationRef.onSnapshot((snapshot) => {
+      console.log('snapshot recieved')
       const conversation = {...snapshot.data(), id: snapshot.id} as IConversation
       res.write('data: ' + JSON.stringify(conversation) + '\n\n')
       res.writeContinue()
-      console.log('wrote', JSON.stringify(conversation))
+      //res.flush() // this is deprecated, but still seems to work
     })
 
     let connectionOpen = true
