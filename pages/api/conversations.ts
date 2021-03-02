@@ -34,7 +34,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       break
     case 'POST':
       try {
-        response.msg = (await addConversation(db)).visible
+        const key = await addConversation(db)
+        response.msg = key.visible
       } catch (ex: any) {
         response.ok = false
         response.msg = JSON.stringify(ex)

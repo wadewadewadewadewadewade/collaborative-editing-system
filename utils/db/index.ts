@@ -1,7 +1,7 @@
 import { IMutation } from './../../pages/api/mutations'
 import { IConversation } from './../../pages/api/conversations'
 import admin from 'firebase-admin'
-import { uuidv4 } from 'uuid'
+import { v4 as uuidv4 } from 'uuid'
 
 if (!admin.apps.length) {
   const serviceAccount = JSON.parse(process.env.firestoreServiceAccountKey) as admin.ServiceAccount
@@ -57,7 +57,7 @@ interface IKey {
 }
 
 // get the FB conversation ID from the visible ID
-export async function getKeyByConversationId(db: FirebaseFirestore.Firestore, visible: string) {
+export async function getKeyByVisibleId(db: FirebaseFirestore.Firestore, visible: string) {
   const keyRef = await db.collection('keys').where('visible', '==', visible).get()
   if (keyRef.empty) {
     return undefined
@@ -68,7 +68,7 @@ export async function getKeyByConversationId(db: FirebaseFirestore.Firestore, vi
 }
 
 // get the visible ID FB from the conversation ID 
-export async function getKeyByVisibleId(db: FirebaseFirestore.Firestore, conversationId: string) {
+export async function getKeyByConversationId(db: FirebaseFirestore.Firestore, conversationId: string) {
   const keyRef = await db.collection('keys').where('conversationId', '==', conversationId).get()
   if (keyRef.empty) {
     return undefined
@@ -80,14 +80,14 @@ export async function getKeyByVisibleId(db: FirebaseFirestore.Firestore, convers
 
 // generate a key for a new visible -> FB conversation ID mapping
 export async function addKey(db: FirebaseFirestore.Firestore, conversationId: string, visible: string = undefined) {
-  const checkExists = await getKeyByVisibleId(db, conversationId)
+  const checkExists = await getKeyByConversationId(db, conversationId)
   if (checkExists) {
     return checkExists
   }
   let visibleValue = visible
   if (visibleValue === undefined) { // make a new key
     visibleValue = uuidv4()
-    while (!(await getKeyByConversationId(db, visibleValue))) {
+    while (await getKeyByVisibleId(db, visibleValue) !== undefined) {
       visibleValue = uuidv4()
     }
   }
@@ -122,6 +122,13 @@ export async function getConversations(db: FirebaseFirestore.Firestore) {
   const conversationRef = await db.collection('conversations').get()
   const conversations = conversationRef.docs.map((doc) => {
     return {...doc.data(), id: doc.id} as IConversation
+  })
+  const keysRef = await db.collection('keys').get()
+  const keys = keysRef.docs.map((doc) => {
+    return {...doc.data(), id: doc.id} as IKey
+  })
+  conversations.forEach((conversation) => {
+    conversation.id = keys.filter((key) => key.conversationId === conversation.id)[0].visible
   })
   return conversations
 }

@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import { useContext, useState } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -28,7 +28,7 @@ const ConversationControls = dynamic(() => import('../components/ConversationCon
 // started at 2021-03-01 11:00 PST
 // stopped at 2021-03-01 12:30 PST - 1.5 (21.25 hours so far...)
 // started at 2021-03-02 06:30 PST
- 
+// stopped at 2021-03-02 08:00 PST - 1.5
 
 export const getStaticProps: GetStaticProps = async () => {
   const conversations: IConversations = await getConversations(db)
@@ -46,6 +46,7 @@ export default function Conversations({
 }) {
   const router = useRouter()
   const { setIsLoading } = useContext(LoadingIndicatorContext)
+  const [stateConversations, setStateConversations] = useState(conversations)
   return (
     <div className={styles.container}>
       <Head>
@@ -78,14 +79,14 @@ export default function Conversations({
           >+</button>
         </h2>
 
-        {conversations && <ol className={styles.grid}>
+        {stateConversations && <ol className={styles.grid}>
 
-          {conversations.map((conversation: IConversation) => (
+          {stateConversations.map((conversation: IConversation) => (
             <li key={conversation.id} className={styles.card}>
               <Link href={`/${conversation.id}`}>
                 <a>
                   <ConversationControls id={conversation.id} onDelete={() => {
-                    conversations = conversations.filter((conv) => conv.id !== conversation.id)
+                    setStateConversations((conv) => conv.filter((c) => c.id !== conversation.id))
                   }} />
                 </a>
               </Link>
