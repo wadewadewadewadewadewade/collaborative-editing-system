@@ -25,6 +25,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     case 'DELETE':
       try {
         await deleteCollection(db, 'conversations', 1000)
+        await deleteCollection(db, 'keys', 1000)
       } catch (ex: any) {
         response.ok = false
         response.msg = JSON.stringify(ex)
@@ -33,7 +34,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       break
     case 'POST':
       try {
-        response.msg = await addConversation(db)
+        response.msg = (await addConversation(db)).visible
       } catch (ex: any) {
         response.ok = false
         response.msg = JSON.stringify(ex)

@@ -26,7 +26,9 @@ const ConversationControls = dynamic(() => import('../components/ConversationCon
 // started at 2021-03-01 06:30 PST
 // stopped at 2021-03-01 08:00 PST - 2.5
 // started at 2021-03-01 11:00 PST
-// stopped at 2021-03-01 
+// stopped at 2021-03-01 12:30 PST - 1.5 (21.25 hours so far...)
+// started at 2021-03-02 06:30 PST
+ 
 
 export const getStaticProps: GetStaticProps = async () => {
   const conversations: IConversations = await getConversations(db)
@@ -67,8 +69,7 @@ export default function Conversations({
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ text: '' })
+                }
               })
               const { msg: id } = await response.json()
               await router.push(`/${id}`)

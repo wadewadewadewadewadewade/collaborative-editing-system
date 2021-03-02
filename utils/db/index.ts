@@ -1,6 +1,7 @@
 import { IMutation } from './../../pages/api/mutations'
 import { IConversation } from './../../pages/api/conversations'
 import admin from 'firebase-admin'
+import { uuidv4 } from 'uuid'
 
 if (!admin.apps.length) {
   const serviceAccount = JSON.parse(process.env.firestoreServiceAccountKey) as admin.ServiceAccount
@@ -38,7 +39,7 @@ async function deleteQueryBatch(db: FirebaseFirestore.Firestore, query: Firebase
   });
 }
 
-type PathType = 'conversations'
+type PathType = 'conversations' | 'keys'
 
 export async function deleteCollection(db: FirebaseFirestore.Firestore, collectionPath: PathType, batchSize: number) {
   const collectionRef = db.collection(collectionPath);
@@ -49,6 +50,74 @@ export async function deleteCollection(db: FirebaseFirestore.Firestore, collecti
   });
 }
 
+interface IKey {
+  visible: string
+  conversationId: string
+  id: string
+}
+
+// get the FB conversation ID from the visible ID
+export async function getKeyByConversationId(db: FirebaseFirestore.Firestore, visible: string) {
+  const keyRef = await db.collection('keys').where('visible', '==', visible).get()
+  if (keyRef.empty) {
+    return undefined
+  } else {
+    const key = keyRef.docs[0]
+    return {...key.data(), id: key.id} as IKey
+  }
+}
+
+// get the visible ID FB from the conversation ID 
+export async function getKeyByVisibleId(db: FirebaseFirestore.Firestore, conversationId: string) {
+  const keyRef = await db.collection('keys').where('conversationId', '==', conversationId).get()
+  if (keyRef.empty) {
+    return undefined
+  } else {
+    const key = keyRef.docs[0]
+    return {...key.data(), id: key.id} as IKey
+  }
+}
+
+// generate a key for a new visible -> FB conversation ID mapping
+export async function addKey(db: FirebaseFirestore.Firestore, conversationId: string, visible: string = undefined) {
+  const checkExists = await getKeyByVisibleId(db, conversationId)
+  if (checkExists) {
+    return checkExists
+  }
+  let visibleValue = visible
+  if (visibleValue === undefined) { // make a new key
+    visibleValue = uuidv4()
+    while (!(await getKeyByConversationId(db, visibleValue))) {
+      visibleValue = uuidv4()
+    }
+  }
+  const data = {visible: visibleValue, conversationId}
+  const key = await db.collection('keys').add(data)
+  return {...data, id: key.id} as IKey
+}
+
+// delete the  key by FB conversation ID
+export async function deleteKeyByConversationId(db: FirebaseFirestore.Firestore, conversationId: string) {
+  const key = await getKeyByConversationId(db, conversationId)
+  if (key) {
+    await db.collection('keys').doc(key.id).delete()
+    return true
+  } else {
+    return false
+  }
+}
+
+// get the visible ID FB from the conversation ID 
+export async function deleteKeyByVisibleId(db: FirebaseFirestore.Firestore, visible: string) {
+  const key = await getKeyByVisibleId(db, visible)
+  if (key) {
+    await db.collection('keys').doc(key.id).delete()
+    return true
+  } else {
+    return false
+  }
+}
+
 export async function getConversations(db: FirebaseFirestore.Firestore) {
   const conversationRef = await db.collection('conversations').get()
   const conversations = conversationRef.docs.map((doc) => {
@@ -57,8 +126,13 @@ export async function getConversations(db: FirebaseFirestore.Firestore) {
   return conversations
 }
 
-export async function getMutations(db: FirebaseFirestore.Firestore, id: string) {
-  const conversationRef = db.collection('conversations').doc(id)
+export async function getMutations(db: FirebaseFirestore.Firestore, visible: string) {
+  let key = await getKeyByVisibleId(db, visible)
+  if (!key) {
+    const conversationNewRef = await db.collection('conversations').add({text: '', created: new Date().toISOString() })
+    key = await addKey(db, conversationNewRef.id, visible)
+  }
+  const conversationRef = db.collection('conversations').doc(key.conversationId)
   const conversationData = await conversationRef.get()
   if (!conversationData.exists) {
     return undefined
@@ -70,18 +144,26 @@ export async function getMutations(db: FirebaseFirestore.Firestore, id: string) 
   return mutations
 }
 
-export async function getConversation(db: FirebaseFirestore.Firestore, id: string) {
-  const conversationRef = db.collection('conversations').doc(id)
+export async function getConversation(db: FirebaseFirestore.Firestore, visible: string) {
+  let key = await getKeyByVisibleId(db, visible)
+  if (!key) {
+    return undefined
+  }
+  const conversationRef = db.collection('conversations').doc(key.conversationId)
   const conversationData = await conversationRef.get()
   if (!conversationData.exists) {
     return undefined
   }
-  const conversation = {...conversationData.data(), id: conversationData.id} as IConversation
+  const conversation = {...conversationData.data(), id: visible} as IConversation
   return conversation
 }
 
-export async function getMutation(db: FirebaseFirestore.Firestore, conversationId: string, id: string) {
-  const conversationRef = db.collection('conversations').doc(conversationId)
+export async function getMutation(db: FirebaseFirestore.Firestore, visible: string, id: string) {
+  let key = await getKeyByVisibleId(db, visible)
+  if (!key) {
+    return undefined
+  }
+  const conversationRef = db.collection('conversations').doc(key.conversationId)
   const conversationData = await conversationRef.get()
   if (!conversationData.exists) {
     return undefined
@@ -96,16 +178,21 @@ export async function getMutation(db: FirebaseFirestore.Firestore, conversationI
 
 export async function addConversation(db : FirebaseFirestore.Firestore) {
   const result = await db.collection('conversations').add({text: '', created: new Date().toISOString() })
-  return result.id
+  const key = await addKey(db, result.id)
+  return key
 }
 
-export async function addMutation(db : FirebaseFirestore.Firestore, id: string, mutation: IMutation) {
-  const conversationRef = db.collection('conversations').doc(id)
+export async function addMutation(db : FirebaseFirestore.Firestore, visible: string, mutation: IMutation) {
+  let key = await getKeyByVisibleId(db, visible)
+  if (!key) {
+    key = await addConversation(db)
+  }
+  const conversationRef = db.collection('conversations').doc(key.conversationId)
   const conversationData = await conversationRef.get()
   if (!conversationData.exists) {
     return undefined
   }
-  const conversation = {...conversationData.data(), id: conversationData.id} as IConversation
+  const conversation = {...conversationData.data(), id: visible} as IConversation
   const { lastMutation } = conversation;
   // adjust next mutation if origin matches last mutation
   if (lastMutation && (lastMutation.origin.bob === mutation.origin.bob && lastMutation.origin.alice === mutation.origin.alice)) {
@@ -126,21 +213,26 @@ export async function addMutation(db : FirebaseFirestore.Firestore, id: string, 
     ...mutation,
     created: new Date().toISOString()
   })
-  const text = await getConversationText(db, id)
+  const text = await getConversationText(db, visible)
   await conversationRef.update({text, lastMutation: mutation})
   return result.id
 }
 
-export async function deleteConversation(db : FirebaseFirestore.Firestore, id: string) {
-  await db.collection('conversations').doc(id).delete()
+export async function deleteConversation(db : FirebaseFirestore.Firestore, visible: string) {
+  let key = await getKeyByVisibleId(db, visible)
+  if (!key) {
+    return undefined
+  }
+  await db.collection('conversations').doc(key.conversationId).delete()
+  await deleteKeyByConversationId(db, key.conversationId)
 }
 
 export async function deleteMutation(db : FirebaseFirestore.Firestore, conversationId: string, id: string) {
   await db.collection('conversations').doc(conversationId).collection('mutations').doc(id).delete()
 }
 
-export async function getConversationText(db : FirebaseFirestore.Firestore, id: string) {
-  const mutations = await getMutations(db, id)
+export async function getConversationText(db : FirebaseFirestore.Firestore, visible: string) {
+  const mutations = await getMutations(db, visible)
   mutations.sort((a,b) => {
     return a.origin.bob - b.origin.bob || a.origin.alice - b.origin.alice
   })
