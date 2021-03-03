@@ -65,6 +65,7 @@ export default function Conversation({
       evtSource.close()
     }
   },[conversation.id])*/
+  let stopPolling = () => {}
   return (
     <div className={styles.container}>
       
@@ -81,12 +82,17 @@ export default function Conversation({
         <h2 className={styles.subtitle}>
           <BackButton />
           <span>Conversation</span>
-          <ConversationControls id={conversation.id} onDelete={() => {
+          <ConversationControls id={conversation.id} beforeDelete={stopPolling} onDelete={() => {
             router.push('/')
           }} />
         </h2>
         
-        <Preformatted conversation={conversation} setMutation={setMutation} buttons />
+        <Preformatted
+          clearPolling={(cb) => stopPolling = cb}
+          conversation={conversation}
+          setMutation={setMutation}
+          buttons
+        />
         <pre className={styles.preformatted} data-title="Last mutation">{mutation}</pre>
 
       </main>

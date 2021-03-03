@@ -20,11 +20,13 @@ let timeout = null
 export default function Preformatted({
   conversation,
   setMutation,
-  buttons
+  buttons,
+  clearPolling
 } : {
   conversation: IConversation,
   setMutation: (mut) => void,
-  buttons: boolean
+  buttons: boolean,
+  clearPolling: (cb: () => void) => void
 }) {
   const [displayText, setDisplayText] = useState(conversation.text || '')
   // I'm stil not sure why useEffect displayText doesn't have correct value
@@ -44,9 +46,13 @@ export default function Preformatted({
             tempDisplayText = adjustedText
             setMutation(JSON.stringify(c.lastMutation, null, 2))
           }
+        }).catch((ex) => {
+          clearInterval(interval)
         })
     }, 3000)
-    return () => clearInterval(interval)
+    const stopPolling = () => clearInterval(interval)
+    clearPolling(stopPolling) // pass this out to parent for delete
+    return stopPolling
   },[conversation.id])
 
   const parse = () => {

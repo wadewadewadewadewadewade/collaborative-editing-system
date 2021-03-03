@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { IDeleteResponse } from '../pages/api/conversations/[id]'
 import styles from '../styles/Home.module.css'
 
 // borrowed from here: https://www.joshwcomeau.com/react/persisting-react-state-in-localstorage/
@@ -23,19 +22,21 @@ function useStickyState(defaultValue, key) {
 
 export default function ConversationControls({
   id,
-  onDelete
+  onDelete,
+  beforeDelete
 }: {
   id: string,
-  onDelete?: () => void
+  onDelete?: () => void,
+  beforeDelete?: () => void
 }) {
   const favoriteId = `favorite_${id}`;
   const [
     favorite,
     setFavorite
   ] = useStickyState(false, favoriteId);
-  let onDel = () => {}
+  let afterDelete = () => {}
   if (onDelete) {
-    onDel = onDelete
+    afterDelete = onDelete
   }
   return (
     <span className={styles.controls}>
@@ -64,18 +65,19 @@ export default function ConversationControls({
           e.stopPropagation()
           e.preventDefault()
           if (window.confirm('Are you sure you want to delete this?')) {
+            beforeDelete()
             fetch(`/conversations/${id}`, {
               method: 'DELETE',
               headers: {
                 'Content-Type': 'application/json'
               }
-            }).then((response) => {
+            }).then(() => {
               // clear favorite
               if (typeof window !== 'undefined') {
                 window.localStorage.removeItem(favoriteId)
               }
               // do navigation
-              onDel()
+              afterDelete()
             })
           }
         }}
