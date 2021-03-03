@@ -16,7 +16,7 @@ export async function getStaticPaths() {
   const conversationPaths = conversations.map((conv) => `/${conv.id}`)
   return {
     paths: conversationPaths,
-    fallback: false
+    fallback: true
   }
 }
 
@@ -44,6 +44,9 @@ export default function Conversation({
   conversation: IConversation
 }) {
   const router = useRouter()
+  if (router.isFallback) {
+    return <div>Loading...</div>
+  }
   const [mutation, setMutation] = useState(JSON.stringify(conversation.lastMutation, null, 2))
   /*useEffect(() => {
     const evtSource = new EventSource(`/api/conversations/sockets/${conversation.id}`)
