@@ -38,11 +38,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         await addMutation(db, mutation.conversationId, mutation)
         const text = await getConversationText(db, mutation.conversationId)
         response.msg = text
+        res.status(201).json(response)
       } catch (ex: any) {
         response.ok = false
         response.msg = JSON.stringify(ex)
+        res.status(400).json(response)
       }
-      res.status(201).json(response)
       break
     default:
       res.status(400).json('bad request')

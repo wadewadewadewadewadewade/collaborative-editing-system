@@ -26,21 +26,23 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       try {
         await deleteCollection(db, 'conversations', 1000)
         await deleteCollection(db, 'keys', 1000)
+        res.status(204).json(response)
       } catch (ex: any) {
         response.ok = false
         response.msg = JSON.stringify(ex)
+        res.status(400).json(response)
       }
-      res.status(204).json(response)
       break
     case 'POST':
       try {
         const key = await addConversation(db)
         response.msg = key.visible
+        res.status(201).json(response)
       } catch (ex: any) {
         response.ok = false
         response.msg = JSON.stringify(ex)
+        res.status(400).json(response)
       }
-      res.status(201).json(response)
       break
     default:
       res.status(400).json('bad request')

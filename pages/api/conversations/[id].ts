@@ -24,11 +24,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       }
       try {
         await deleteConversation(db, id as string)
+        res.status(204).json(response)
       } catch (ex: any) {
         response.ok = false
         response.msg = JSON.stringify(ex)
+        res.status(400).json(response)
       }
-      res.status(204).json(response)
       break
     default:
       res.status(400).json('bad request')
