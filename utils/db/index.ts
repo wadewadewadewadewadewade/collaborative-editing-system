@@ -254,7 +254,5 @@ export async function getConversationText(db : FirebaseFirestore.Firestore, visi
       text = text.slice(0, mut.data.index) + after
     }
   })
-  // TODO: store this as a snapshot to save calculations in the future, using
-  // the numebr of mutations as the 'version' 
   return text
 }
