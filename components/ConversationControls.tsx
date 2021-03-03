@@ -65,7 +65,7 @@ export default function ConversationControls({
           e.stopPropagation()
           e.preventDefault()
           if (window.confirm('Are you sure you want to delete this?')) {
-            beforeDelete()
+            beforeDelete && beforeDelete()
             fetch(`/conversations/${id}`, {
               method: 'DELETE',
               headers: {

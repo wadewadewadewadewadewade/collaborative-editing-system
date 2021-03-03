@@ -183,17 +183,19 @@ export async function getMutation(db: FirebaseFirestore.Firestore, visible: stri
   return {...mutationData.data(), id: mutationData.id} as IMutation
 }
 
-export async function addConversation(db : FirebaseFirestore.Firestore) {
+export async function addConversation(db: FirebaseFirestore.Firestore, visible?: string) {
   const result = await db.collection('conversations').add({text: '', created: new Date().toISOString() })
-  const key = await addKey(db, result.id)
+  const key = await addKey(db, result.id, visible)
   return key
 }
 
 export async function addMutation(db : FirebaseFirestore.Firestore, visible: string, mutation: IMutation) {
   let key = await getKeyByVisibleId(db, visible)
+  console.log('one', {key})
   if (!key) {
-    key = await addConversation(db)
+    key = await addConversation(db, visible)
   }
+  console.log('two', {key})
   const conversationRef = db.collection('conversations').doc(key.conversationId)
   const conversationData = await conversationRef.get()
   if (!conversationData.exists) {
@@ -216,6 +218,7 @@ export async function addMutation(db : FirebaseFirestore.Firestore, visible: str
   }
   // the above transofrm doesn't ajust for older mutations than simeltanious
   // coming in late, like someone that was offline for a long period of time...
+  console.log('three', {key})
   const result = await conversationRef.collection('mutations').add({
     ...mutation,
     created: new Date().toISOString()
