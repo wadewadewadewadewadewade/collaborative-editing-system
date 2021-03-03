@@ -35,7 +35,8 @@ export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
       conversations
-    }
+    },
+    revalidate: 1
   }
 }
 
