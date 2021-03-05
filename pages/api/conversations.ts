@@ -16,7 +16,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   await runMiddleware(req, res, cors)
   switch (req.method) {
     case 'GET':
-      res.status(200).json(await getConversations(db))
+      res.status(200).json({ converstions: await getConversations(db) })
       break
     case 'DELETE':
       
