@@ -11,25 +11,6 @@ import { LoadingIndicatorContext } from './_app'
 
 const ConversationControls = dynamic(() => import('../components/ConversationControls'))
 
-// started at 2021-02-26 14:30 PST
-// stopped at 2021-02-26 18:00 PST - 3.5
-// started at 2021-02-27 08:00 PST
-// stopped at 2021-02-27 11:45 PST - 3.75
-// started at 2021-02-27 17:30 PST
-// stopped at 2021-02-27 20:30 PST - 3
-// started at 2021-02-28 06:00 PST
-// stopped at 2021-02-28 08:00 PST - 2 (got nothing done on listeners)
-// started at 2021-02-28 14:00 PST
-// stopped at 2021-02-28 17:00 PST - 3 (stil owrking on listner)
-// started at 2021-02-28 19:00 PST
-// stopped at 2021-02-28 21:00 PST - 2 (gave up and switch to long-polling)
-// started at 2021-03-01 06:30 PST
-// stopped at 2021-03-01 08:00 PST - 2.5
-// started at 2021-03-01 11:00 PST
-// stopped at 2021-03-01 12:30 PST - 1.5 (21.25 hours so far...)
-// started at 2021-03-02 06:30 PST
-// stopped at 2021-03-02 08:00 PST - 1.5
-
 export const getStaticProps: GetStaticProps = async () => {
   const conversations: IConversations = await getConversations(db)
   return {

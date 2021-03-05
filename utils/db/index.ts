@@ -236,7 +236,10 @@ export async function addMutation(db : FirebaseFirestore.Firestore, visible: str
   }
   // the above transofrm doesn't ajust for older mutations than simeltanious
   // coming in late, like someone that was offline for a long period of time...
-  const result = await conversationRef.collection('mutations').add(mutation)
+  const result = await conversationRef.collection('mutations').add({
+    ...mutation,
+    created: new Date().toISOString()
+  })
   const text = await getConversationText(db, visible)
   await conversationRef.update({text, lastMutation: mutation})
   return result.id
