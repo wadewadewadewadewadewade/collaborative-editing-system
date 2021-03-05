@@ -28,21 +28,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       res.status(400).json('bad request')
       break
     case 'POST':
-      const response = {
-        msg: undefined,
-        ok: true,
-        text: undefined
-      }
       try {
         const mutation: IMutation = req.body
         await addMutation(db, mutation.conversationId, mutation)
         const text = await getConversationText(db, mutation.conversationId)
-        response.msg = text
-        res.status(201).json(response)
+        res.status(201).json({ok: true, text})
       } catch (ex: any) {
-        response.ok = false
-        response.msg = JSON.stringify(ex)
-        res.status(400).json(response)
+        res.status(400).json({ok: false, msg: JSON.stringify(ex)})
       }
       break
     default:

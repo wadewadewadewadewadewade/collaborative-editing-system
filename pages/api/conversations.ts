@@ -14,10 +14,6 @@ export type IConversations = Array<IConversation>
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   await runMiddleware(req, res, cors)
-  let response = {
-    msg: undefined,
-    ok: true
-  }
   switch (req.method) {
     case 'GET':
       res.status(200).json(await getConversations(db))
@@ -32,22 +28,17 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         })
         await deleteCollection(db, 'conversations', 1000)
         await deleteCollection(db, 'keys', 1000)
-        res.status(204).json(response)
+        res.status(204).json({ok: true})
       } catch (ex: any) {
-        response.ok = false
-        response.msg = JSON.stringify(ex)
-        res.status(400).json(response)
+        res.status(400).json({ok: false, msg: JSON.stringify(ex)})
       }
       break
     case 'POST':
       try {
         const key = await addConversation(db)
-        response.msg = key.visible
-        res.status(201).json(response)
+        res.status(201).json({ok: true, msg: key.visible})
       } catch (ex: any) {
-        response.ok = false
-        response.msg = JSON.stringify(ex)
-        res.status(400).json(response)
+        res.status(400).json({ok: false, msg: JSON.stringify(ex)})
       }
       break
     default:
