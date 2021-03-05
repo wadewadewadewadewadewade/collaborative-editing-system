@@ -1,11 +1,11 @@
 import { IMutation } from './mutations';
 import type { NextApiRequest, NextApiResponse } from 'next'
 import cors, { runMiddleware } from '../../utils/cors'
-import db, { addConversation, deleteCollection, deleteConversation, deleteMutationsWithinConversation, getConversation, getConversations } from '../../utils/db';
+import db, { addConversation, deleteCollection, deleteMutationsWithinConversation, getConversations } from '../../utils/db';
 
 export interface IConversation {
   id: string
-  mutations: number
+  created?: string
   lastMutation: IMutation
   text: string
 }
@@ -16,7 +16,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   await runMiddleware(req, res, cors)
   switch (req.method) {
     case 'GET':
-      res.status(200).json({ converstions: await getConversations(db), ok: true })
+      res.status(200).json({ conversations: await getConversations(db), ok: true })
       break
     case 'DELETE':
       

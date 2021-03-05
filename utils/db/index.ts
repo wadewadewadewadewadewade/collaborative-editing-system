@@ -130,7 +130,9 @@ export async function deleteKeyByVisibleId(db: FirebaseFirestore.Firestore, visi
 export async function getConversations(db: FirebaseFirestore.Firestore) {
   const conversationRef = await db.collection('conversations').get()
   const conversations = conversationRef.docs.map((doc) => {
-    return {...doc.data(), id: doc.id} as IConversation
+    const conv = {...doc.data(), id: doc.id} as IConversation
+    const { created, ...rest } = conv
+    return rest as IConversation
   })
   const keysRef = await db.collection('keys').get()
   const keys = keysRef.docs.map((doc) => {
@@ -162,7 +164,9 @@ export async function getMutations(db: FirebaseFirestore.Firestore, visible: str
   }
   const mutationRef = await conversationRef.collection('mutations').orderBy('created', 'desc').get()
   const mutations = mutationRef.docs.map((doc) => {
-    return {...doc.data(), id: doc.id} as IMutation
+    const mut = {...doc.data(), id: doc.id} as IMutation
+    const { created, ...rest } = mut
+    return rest
   })
   return mutations
 }
@@ -232,10 +236,7 @@ export async function addMutation(db : FirebaseFirestore.Firestore, visible: str
   }
   // the above transofrm doesn't ajust for older mutations than simeltanious
   // coming in late, like someone that was offline for a long period of time...
-  const result = await conversationRef.collection('mutations').add({
-    ...mutation,
-    created: new Date().toISOString()
-  })
+  const result = await conversationRef.collection('mutations').add(mutation)
   const text = await getConversationText(db, visible)
   await conversationRef.update({text, lastMutation: mutation})
   return result.id

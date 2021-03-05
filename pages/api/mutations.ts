@@ -3,7 +3,8 @@ import cors, { runMiddleware } from '../../utils/cors'
 import db, { addMutation, getConversationText } from '../../utils/db'
 
 export interface IMutation {
-  id?: string
+  id?: string,
+  created?: string
   author: 'alice' | 'bob'
   conversationId: string
   data: {
