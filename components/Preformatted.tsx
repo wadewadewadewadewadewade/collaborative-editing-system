@@ -40,7 +40,7 @@ export default function Preformatted({
         .then((c: IConversation) => {
           const adjustedText = c ? c.text || '' : ''
           if (c && adjustedText !== tempDisplayText) {
-            console.log('setting conv', adjustedText, displayText, tempDisplayText)
+            // console.log('setting conv', adjustedText, displayText, tempDisplayText)
             setDisplayText(adjustedText)
             setDocument(adjustedText)
             tempDisplayText = adjustedText
@@ -56,7 +56,7 @@ export default function Preformatted({
   },[conversation.id])
 
   const parse = () => {
-    console.log('parse', {document, displayText})
+    // console.log('parse', {document, displayText})
     let inserts = null
     let deletes = null
     const first = document.split(' ')
@@ -90,7 +90,7 @@ export default function Preformatted({
       limit--
     }
     if (inserts || deletes) {
-      console.log({inserts, deletes})
+      // console.log({inserts, deletes})
       setDocument(displayText)
     }
   }

@@ -50,6 +50,15 @@ export async function deleteCollection(db: FirebaseFirestore.Firestore, collecti
   });
 }
 
+export async function deleteMutationsWithinConversation(db: FirebaseFirestore.Firestore, conversationRef: FirebaseFirestore.DocumentReference<FirebaseFirestore.DocumentData>, batchSize: number) {
+  const collectionRef = conversationRef.collection('mutations');
+  const query = collectionRef.orderBy('__name__').limit(batchSize);
+
+  return new Promise((resolve, reject) => {
+    deleteQueryBatch(db, query, resolve).catch(reject);
+  });
+}
+
 interface IKey {
   visible: string
   conversationId: string
@@ -127,8 +136,15 @@ export async function getConversations(db: FirebaseFirestore.Firestore) {
   const keys = keysRef.docs.map((doc) => {
     return {...doc.data(), id: doc.id} as IKey
   })
+  // plug the visible IDs into the cionversation objects, if they exist
   conversations.forEach((conversation) => {
-    conversation.id = keys.filter((key) => key.conversationId === conversation.id)[0].visible
+    const keyMapping = keys.filter((k) => k.conversationId === conversation.id)
+    if (keyMapping.length > 0) {
+      const key = keyMapping[0]
+      if (key && typeof key.visible !=='undefined') {
+        conversation.id = key.visible
+      }
+    }
   })
   return conversations
 }
@@ -230,7 +246,9 @@ export async function deleteConversation(db : FirebaseFirestore.Firestore, visib
   if (!key) {
     return undefined
   }
-  await db.collection('conversations').doc(key.conversationId).delete()
+  const conversationRef = db.collection('conversations').doc(key.conversationId)
+  await deleteMutationsWithinConversation(db, conversationRef, 1000)
+  await conversationRef.delete()
   await deleteKeyByConversationId(db, key.conversationId)
 }
 
