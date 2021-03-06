@@ -1,16 +1,8 @@
-import { IMutation } from './mutations';
 import type { NextApiRequest, NextApiResponse } from 'next'
 import cors, { runMiddleware } from '../../utils/cors'
-import db, { addConversation, deleteCollection, deleteMutationsWithinConversation, getConversations } from '../../utils/db';
-
-export interface IConversation {
-  id: string
-  created?: string
-  lastMutation: IMutation
-  text: string
-}
-
-export type IConversations = Array<IConversation>
+import db, { deleteCollection } from '../../utils/db'
+import { addConversation, getConversations } from '../../utils/db/conversations'
+import { deleteMutationsWithinConversation } from '../../utils/db/mutations'
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   await runMiddleware(req, res, cors)
@@ -26,6 +18,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           const conversationRef = db.collection('conversations').doc(conversation.id)
           await deleteMutationsWithinConversation(db, conversationRef, 1000)
         })
+        await deleteCollection(db, 'conversations/mutations', 1000)
         await deleteCollection(db, 'conversations', 1000)
         await deleteCollection(db, 'keys', 1000)
         res.status(204).json({ok: true})

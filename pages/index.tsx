@@ -5,8 +5,8 @@ import { useRouter } from 'next/router'
 import dynamic from 'next/dynamic'
 import styles from '../styles/Home.module.css'
 import { GetStaticProps } from 'next'
-import { IConversations, IConversation } from './api/conversations'
-import db, { getConversations } from '../utils/db'
+import { IConversations, IConversation, getConversations } from '../utils/db/conversations'
+import db from '../utils/db'
 import { LoadingIndicatorContext } from './_app'
 
 const ConversationControls = dynamic(() => import('../components/ConversationControls'))

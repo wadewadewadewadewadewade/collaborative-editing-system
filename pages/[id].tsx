@@ -4,10 +4,10 @@ import dynamic from 'next/dynamic'
 import BackButton from '../components/BackButton'
 import styles from '../styles/Home.module.css'
 import { GetStaticProps } from 'next'
-import { IConversation, IConversations } from './api/conversations'
 import { useRouter } from 'next/router'
-import db, { getConversations, getConversation } from '../utils/db'
+import db from '../utils/db'
 import Preformatted from '../components/Preformatted'
+import { getConversation, getConversations, IConversation, IConversations } from '../utils/db/conversations'
 
 const ConversationControls = dynamic(() => import('../components/ConversationControls'))
 
@@ -91,7 +91,6 @@ export default function Conversation({
           clearPolling={(cb) => stopPolling = cb}
           conversation={conversation}
           setMutation={setMutation}
-          buttons
         />
         <pre className={styles.preformatted} data-title="Last mutation">{mutation}</pre>
 

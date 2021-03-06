@@ -14,6 +14,14 @@ module.exports = {
         destination: '/api/mutations'
       },
       {
+        source: '/mutations/:id',
+        destination: '/api/mutations/:id'
+      },
+      {
+        source: '/mutations/:id/:mutationId',
+        destination: '/api/mutations/:id'
+      },
+      {
         source: '/conversations',
         destination: '/api/conversations'
       },

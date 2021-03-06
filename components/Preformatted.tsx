@@ -1,31 +1,17 @@
-import { useEffect, useState } from 'react'
-import { IMutation } from '../pages/api/mutations'
-import { IConversation } from '../pages/api/conversations'
 import styles from '../styles/Home.module.css'
-
-const insertMutation = async (data: IMutation) => {
-  const response = await fetch('/mutations', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(data)
-  })
-  const result = await response.json()
-  return result
-}
+import { useEffect, useState } from 'react'
+import { IConversation } from '../utils/db/conversations'
+import TestButton from './TestButton'
 
 let timeout = null
 
 export default function Preformatted({
   conversation,
   setMutation,
-  buttons,
   clearPolling
 } : {
   conversation: IConversation,
   setMutation: (mut) => void,
-  buttons: boolean,
   clearPolling: (cb: () => void) => void
 }) {
   const [displayText, setDisplayText] = useState(conversation.text || '')
@@ -49,7 +35,7 @@ export default function Preformatted({
         }).catch((ex) => {
           clearInterval(interval)
         })
-    }, 3000)
+    }, 1000)
     const stopPolling = () => clearInterval(interval)
     clearPolling(stopPolling) // pass this out to parent for delete
     return stopPolling
@@ -95,6 +81,28 @@ export default function Preformatted({
     }
   }
 
+  const buttons: Array<{
+    author: 'bob' | 'alice';
+    data: {
+        type: 'insert' | 'delete';
+        index: number;
+        text?: string;
+        length?: number;
+    };
+    origin: {
+        bob: number;
+        alice: number;
+    };
+  }> = [
+    {"author":"bob","data":{"type":"insert","index":0,"text":"The"},"origin":{"bob":0,"alice":0}},
+    {"author":"bob","data":{"type":"insert","index":3,"text":" house"},"origin":{"bob":1,"alice":0}},
+    {"author":"bob","data":{"type":"insert","index":9,"text":" is"},"origin":{"bob":2,"alice":0}},
+    {"author":"bob","data":{"type":"insert","index":12,"text":" red."},"origin":{"bob":3,"alice":0}},
+    {"author":"alice","data":{"type":"delete","index":0,"length":3},"origin":{"bob":2,"alice":0}},
+    {"author":"alice","data":{"type":"insert","index":0,"text":"THE"},"origin":{"bob":2,"alice":1}},
+    {"author":"bob","data":{"type":"insert","index":13,"text":" and blue"},"origin":{"bob":4,"alice":1}}
+  ]
+
   return (
     <>
       <textarea
@@ -115,86 +123,42 @@ export default function Preformatted({
           }
         }}
       ></textarea>
-      {buttons && (<>
-        <ul className={styles.buttons} data-title="Example 1">
-          <li>
-            <button onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              insertMutation({conversationId:conversation.id,"author":"bob","data":{"index":0,"text":"The","type":"insert"},"origin":{"alice":0,"bob":0}})
-            }}>B(0, 0)INS0:'The'</button>
-          </li>
-          <li>
-            <button onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              insertMutation({conversationId:conversation.id,"author":"bob","data":{"index":3,"text":" house","type":"insert"},"origin":{"alice":0,"bob":1}})
-            }}>B(1, 0)INS3:' house'</button>
-          </li>
-          <li>
-            <button onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              insertMutation({conversationId:conversation.id,"author":"bob","data":{"index":9,"text":" is","type":"insert"},"origin":{"alice":0,"bob":2}})
-            }}>B(2, 0)INS9:' is'</button>
-          </li>
-          <li>
-            <button onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              insertMutation({conversationId:conversation.id,"author":"bob","data":{"index":12,"text":" red.","type":"insert"},"origin":{"alice":0,"bob":3}})
-            }}>B(3, 0)INS12:' red.'</button>
-          </li>
-        </ul>
-        <ul className={styles.buttons} data-title="Example 2">
-          <li>
-            <button onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              insertMutation({conversationId:conversation.id,"author":"bob","data":{"index":13,"length":4,"type":"delete"},"origin":{"alice":0,"bob":4}})
-            }}>B(4, 0)DEL13:4</button>
-          </li>
-          <li>
-            <button onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              insertMutation({conversationId:conversation.id,"author":"bob","data":{"index":13,"text":"blue","type":"insert"},"origin":{"alice":0,"bob":5}})
-            }}>B(5, 0)INS13:'blue'</button>
-          </li>
-        </ul>
-        <ul className={styles.buttons} data-title="Example 3">
-          <li>
-            <button onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              insertMutation({conversationId:conversation.id,"author":"alice","data":{"index":13,"length":4,"type":"delete"},"origin":{"alice":0,"bob":6}})
-            }}>A(6, 0)DEL13:4</button>
-          </li>
-          <li>
-            <button onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              insertMutation({conversationId:conversation.id,"author":"alice","data":{"index":13,"text":"green","type":"insert"},"origin":{"alice":1,"bob":6}})
-            }}>A(6, 1)INS13:'green'</button>
-          </li>
-        </ul>
-        <ul className={styles.buttons} data-title="Example 4">
-          <li>
-            <button onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              insertMutation({conversationId:conversation.id,"author":"alice","data":{"index":3,"text":" big","type":"insert"},"origin":{"alice":2,"bob":6}})
-            }}>A(6, 2)INS3:' big'</button>
-          </li>
-          <li>
-            <button onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              insertMutation({conversationId:conversation.id,"author":"bob","data":{"index":18,"text":" and yellow","type":"insert"},"origin":{"alice":2,"bob":6}})
-            }}>B(6, 2)INS18:' and yellow'</button>
-          </li>
-        </ul>
-      </>)}
+      
+      <div className={styles.columns}>
+        <div className={styles.column}>
+          {buttons.map((t,i) => <TestButton key={`mutation-${i}`} mutation={{...t, conversationId: conversation.id}} />)}
+          <button onClick={async (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            await fetch(`/mutations/${conversation.id}`, {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            })
+          }}>Reset</button>
+        </div>
+        <div className={styles.column}>
+          <div className={styles.pre}>
+For Each Mutation<br/>
+<span></span>If PreviousMutation.Origin[ThisMutationAuthor] &gt;= ThisMutation.Origin[ThisMutationAuthor]<br/>
+<span></span><span></span><i className={styles.comment}>// Shift index on this mutation if necessary</i><br/>
+<span></span><span></span>If PreviousMutation.Index ToTheLeftOf ThisMutation.Index<br/>
+<span></span><span></span><span></span>If PreviousMutation.Type = Insert<br/>
+<span></span><span></span><span></span><span></span>ThisMutation.Index = ThisMutation.Index + PreviousMutation.Test.length<br/>
+<span></span><span></span><span></span>If PreviousMutation.Type = Delete<br/>
+<span></span><span></span><span></span><span></span>ThisMutation.Index = ThisMutation.Index - PreviousMutation.Length<br/>
+<span></span><span></span><i className={styles.comment}>// Adjust the origin on this mutation if necessary</i><br/>
+<span></span><span></span>If PreviousMutation.Origin[ThisMutationAuthor] == ThisMutation.Origin[ThisMutationAuthor]<br/>
+<span></span><span></span><span></span>ThisMutation.Origin[ThisMutationAuthor] = PreviousMutation.Origin[ThisMutationAuthor] + 1<br/>
+<span></span><i className={styles.comment}>// Adjust origin for all other authors if necessary</i><br/>
+<span></span>For Each OtherAuthor<br/>
+<span></span><span></span>If PreviousMutation.Origin[OtherAuthor] == ThisMutation.Origin[OtherAuthor]<br/>
+<span></span><span></span><span></span>ThisMutation.Origin[OtherAuthor] = PreviousMutation.Origin[OtherAuthor] + 1<br/>
+          </div>
+        </div>
+      </div>
+        
     </>
   )
 }

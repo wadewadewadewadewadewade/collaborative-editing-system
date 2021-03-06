@@ -278,6 +278,33 @@ h2 .controls {
   display: block;
 }
 
+.columns {
+  display:flex;
+  flex-wrap: nowrap;
+  max-width: 100%;
+}
+
+.columns .column {
+  display:flex;
+  flex-direction: column;
+}
+
+.columns .column .pre {
+  font-family:monospace;
+  font-size:10pt;
+  margin-left: 1rem;
+  line-height:1.4;
+}
+
+.columns .column .comment {
+  color: blue;
+}
+
+.columns .column span {
+  display:inline-block;
+  width:2em;
+}
+
 @media (max-width: 600px) {
   .grid {
     width: 100%;
