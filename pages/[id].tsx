@@ -35,7 +35,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
     props: {
       conversation
     },
-    revalidate: 1
+    revalidate: 1,
+    unstable_revalidate: 1
   }
 }
 
