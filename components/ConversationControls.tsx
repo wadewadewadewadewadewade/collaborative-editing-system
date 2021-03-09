@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import styles from '../styles/Home.module.css'
+import { LoadingIndicatorContext } from '../pages/_app'
+import { fetchWithTimeout } from '../utils'
 
-// borrowed from here: https://www.joshwcomeau.com/react/persisting-react-state-in-localstorage/
+// below borrowed from here: https://www.joshwcomeau.com/react/persisting-react-state-in-localstorage/
 // meant to be run client-side, so be sure to load this with ssr: false
 function useStickyState(defaultValue, key) {
   const [value, setValue] = useState(() => {
@@ -34,6 +36,7 @@ export default function ConversationControls({
     favorite,
     setFavorite
   ] = useStickyState(false, favoriteId);
+  const { setIsLoading } = useContext(LoadingIndicatorContext)
   let afterDelete = () => {}
   if (onDelete) {
     afterDelete = onDelete
@@ -52,6 +55,7 @@ export default function ConversationControls({
           onChange={(e) => setFavorite((e.target as HTMLInputElement).checked)}
         />
         <label
+          title="Favorite this Conversation"
           onClick={(e) => {
             e.stopPropagation();
           }}
@@ -59,25 +63,29 @@ export default function ConversationControls({
         >Favorite</label>
       </span>
       <button
+        title="Delete this Conversation"
         className={`${styles.card} ${styles.buttonsDelete}`}
         type="button"
         onClick={(e) => {
           e.stopPropagation()
           e.preventDefault()
           if (window.confirm('Are you sure you want to delete this?')) {
+            setIsLoading(true)
             beforeDelete && beforeDelete()
-            fetch(`/conversations/${id}`, {
+            // timeout here because vercel DELETE seem to time out
+            fetchWithTimeout(`/conversations/${id}`, {
               method: 'DELETE',
               headers: {
                 'Content-Type': 'application/json'
               }
-            }).then(() => {
+            }).finally(() => {
               // clear favorite
               if (typeof window !== 'undefined') {
                 window.localStorage.removeItem(favoriteId)
               }
               // do navigation
               afterDelete()
+              setIsLoading(false)
             })
           }
         }}

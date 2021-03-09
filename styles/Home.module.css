@@ -121,7 +121,7 @@
   height: 1em;
 }
 
-.loading-indicator {
+.loadingIndicator {
   position: fixed;
   top:0;
   bottom:0;
@@ -130,6 +130,7 @@
   display:flex;
   justify-content: center;
   align-items: center;
+  background:rgba(255,255,255,0.75);
 }
 
 h2 .controls {
@@ -161,16 +162,15 @@ h2 .controls {
   font-size: 12pt;
 }
 
-.buttonsBack {
+.buttonBack {
   font-size: 30pt;
-  margin-right:3rem;
 }
 
 .buttonsAdd {
   margin-left:3rem;
 }
 
-.buttonsDelete, .buttonsFavorite, .buttonsAdd {
+.buttonsDelete, .buttonsFavorite, .buttonsAdd, .buttonBack {
   display:flex;
   align-items: center;
   justify-content: center;
@@ -195,7 +195,7 @@ h2 .controls {
   content: '★';
 }
 
-.buttonsDelete, .buttonsAdd {
+.buttonsDelete, .buttonsAdd, .buttonBack {
   font-size:20pt;
   background: transparent;
   padding:1.5rem !important;

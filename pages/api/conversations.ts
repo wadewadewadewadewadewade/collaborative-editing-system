@@ -11,14 +11,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       res.status(200).json({ conversations: await getConversations(db), ok: true })
       break
     case 'DELETE':
-      
       try {
         const conversations = await getConversations(db)
         conversations.forEach(async (conversation) => {
+          console.log(conversation.id)
           const conversationRef = db.collection('conversations').doc(conversation.id)
           await deleteMutationsWithinConversation(db, conversationRef, 1000)
         })
-        await deleteCollection(db, 'conversations/mutations', 1000)
         await deleteCollection(db, 'conversations', 1000)
         await deleteCollection(db, 'keys', 1000)
         res.status(204).json({ok: true})

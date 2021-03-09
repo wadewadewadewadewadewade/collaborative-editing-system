@@ -8,6 +8,7 @@ import { GetStaticProps } from 'next'
 import { IConversations, IConversation, getConversations } from '../utils/db/conversations'
 import db from '../utils/db'
 import { LoadingIndicatorContext } from './_app'
+import { fetchWithTimeout } from '../utils'
 
 const ConversationControls = dynamic(() => import('../components/ConversationControls'))
 
@@ -44,7 +45,8 @@ export default function Conversations({
         <h2 className={styles.subtitle}>
           <span>Conversations</span>
           <button
-            className={`${styles.card} buttons-add`}
+            title="New Conversation"
+            className={`${styles.card} ${styles.buttonsAdd}`}
             onClick={async (e) => {
               e.preventDefault();
               setIsLoading(true);
@@ -59,6 +61,26 @@ export default function Conversations({
               setIsLoading(false)
             }}
           >+</button>
+          {conversations && conversations.length > 0 && (
+            <button
+              title="Delete All Conversations"
+              className={`${styles.card} ${styles.buttonsDelete}`}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (window.confirm('Are you sure you want to delete this?')) {
+                  setIsLoading(true);
+                  await fetchWithTimeout('/conversations', {
+                    method: 'DELETE',
+                    headers: {
+                      'Content-Type': 'application/json'
+                    }
+                  })
+                  router.reload()
+                  setIsLoading(false)
+                }
+              }}
+            ></button>
+          )}
         </h2>
 
         {stateConversations && <ol className={styles.grid}>

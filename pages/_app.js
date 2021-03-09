@@ -1,8 +1,9 @@
 import '../styles/globals.css'
 import { createContext } from 'react'
 import { LoaderProvider, useLoading, BallTriangle } from '@agney/react-loading'
-import { useState } from 'react';
-import Router from 'next/router';
+import { useState } from 'react'
+import Router from 'next/router'
+import styles from '../styles/Home.module.css'
 
 export const LoadingIndicatorContext = createContext();
 
@@ -14,15 +15,15 @@ export const LoadingIndicatorProvider = ({ children }) => {
     indicator: <BallTriangle width="50" />
   });
   Router.events.on('routeChangeStart', () => setIsLoading(true)); 
-  Router.events.on('routeChangeComplete', () => setIsLoading(true)); 
-  Router.events.on('routeChangeError', () => setIsLoading(true)); 
+  Router.events.on('routeChangeComplete', () => setIsLoading(false)); 
+  Router.events.on('routeChangeError', () => setIsLoading(false)); 
   return (
     <LoadingIndicatorContext.Provider
       value={{ setIsLoading }}
     >
       <LoaderProvider>
+      {isLoading && <section className={styles.loadingIndicator} {...containerProps}>{indicatorEl}</section>}
         {children}
-        {isLoading && <section className="loading-indicator" {...containerProps}>{indicatorEl}</section>}
       </LoaderProvider>
     </LoadingIndicatorContext.Provider>
   )

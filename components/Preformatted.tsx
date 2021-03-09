@@ -3,8 +3,6 @@ import { useEffect, useState } from 'react'
 import { IConversation } from '../utils/db/conversations'
 import TestButton from './TestButton'
 
-let timeout = null
-
 export default function Preformatted({
   conversation,
   setMutation,
@@ -17,8 +15,9 @@ export default function Preformatted({
   const [displayText, setDisplayText] = useState(conversation.text || '')
   // I'm stil not sure why useEffect displayText doesn't have correct value
   // so I'musing this work-around
+  const testButtonsVisible = false
   let tempDisplayText = displayText
-  const [document, setDocument] = useState('')
+  const [document, setDocument] = useState(conversation.text || '')
   useEffect(() => {
     const interval = setInterval(() => {
       fetch(`/conversations/${conversation.id}`)
@@ -41,8 +40,8 @@ export default function Preformatted({
     return stopPolling
   },[conversation.id])
 
-  const parse = () => {
-    // console.log('parse', {document, displayText})
+  /* const parse = () => {
+    console.log('parse', {document, displayText})
     let inserts = null
     let deletes = null
     const first = document.split(' ')
@@ -58,28 +57,28 @@ export default function Preformatted({
       if (w1 === w2) {
         i1++;
         i2++;
-      } else if (w1 === w2p) {
+      } else if (w1 === w2p && w2) {
         inserts = {word: w2};
         i1++;
         i2 = i2 + 2;
-      } else if (w2 === w1p) {
+      } else if (w2 === w1p && w2) {
         deletes = {word: w2};
         i2++;
         i1 = i1 + 2;
-      } else if (w2 && !w1) {
+      } else if (w2 && !w1 && w2) {
         inserts = {word: w2}
         i2++
-      } else {
+      } else if (w1) {
         deletes = {word: w1};
         i1++
       }
       limit--
     }
     if (inserts || deletes) {
-      // console.log({inserts, deletes})
+      console.log({inserts, deletes})
       setDocument(displayText)
     }
-  }
+  } */
 
   const buttons: Array<{
     author: 'bob' | 'alice';
@@ -106,59 +105,61 @@ export default function Preformatted({
   return (
     <>
       <textarea
-        value={displayText}
-        onChange={(e) => setDisplayText(e.target.value)}
+        defaultValue={displayText}
+        disabled
+        /* onChange={(e) => setDisplayText(e.target.value)}
         onKeyUp={(e) => {
           if (timeout) {
             clearTimeout(timeout)
             timeout = null
           }
           timeout = setTimeout(() => parse(), 5000)
-          if (/\B/.test(e.key)) {
+          if (e.key !== 'Backspace' && e.key !== 'Delete' && /\B/.test(e.key)) {
             parse()
             if (timeout) {
               clearTimeout(timeout)
               timeout = null
             }
           }
-        }}
+        }}*/
       ></textarea>
       
-      <div className={styles.columns}>
-        <div className={styles.column}>
-          {buttons.map((t,i) => <TestButton key={`mutation-${i}`} mutation={{...t, conversationId: conversation.id}} />)}
-          <button onClick={async (e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            await fetch(`/mutations/${conversation.id}`, {
-              method: 'DELETE',
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            })
-          }}>Reset</button>
-        </div>
-        <div className={styles.column}>
-          <div className={styles.pre}>
-For Each Mutation<br/>
-<span></span>If PreviousMutation.Origin[ThisMutationAuthor] &gt;= ThisMutation.Origin[ThisMutationAuthor]<br/>
-<span></span><span></span><i className={styles.comment}>// Shift index on this mutation if necessary</i><br/>
-<span></span><span></span>If PreviousMutation.Index ToTheLeftOf ThisMutation.Index<br/>
-<span></span><span></span><span></span>If PreviousMutation.Type = Insert<br/>
-<span></span><span></span><span></span><span></span>ThisMutation.Index = ThisMutation.Index + PreviousMutation.Test.length<br/>
-<span></span><span></span><span></span>If PreviousMutation.Type = Delete<br/>
-<span></span><span></span><span></span><span></span>ThisMutation.Index = ThisMutation.Index - PreviousMutation.Length<br/>
-<span></span><span></span><i className={styles.comment}>// Adjust the origin on this mutation if necessary</i><br/>
-<span></span><span></span>If PreviousMutation.Origin[ThisMutationAuthor] == ThisMutation.Origin[ThisMutationAuthor]<br/>
-<span></span><span></span><span></span>ThisMutation.Origin[ThisMutationAuthor] = PreviousMutation.Origin[ThisMutationAuthor] + 1<br/>
-<span></span><i className={styles.comment}>// Adjust origin for all other authors if necessary</i><br/>
-<span></span>For Each OtherAuthor<br/>
-<span></span><span></span>If PreviousMutation.Origin[OtherAuthor] == ThisMutation.Origin[OtherAuthor]<br/>
-<span></span><span></span><span></span>ThisMutation.Origin[OtherAuthor] = PreviousMutation.Origin[OtherAuthor] + 1<br/>
+      {testButtonsVisible && 
+        <div className={styles.columns}>
+          <div className={styles.column}>
+            {buttons.map((t,i) => <TestButton key={`mutation-${i}`} mutation={{...t, conversationId: conversation.id}} />)}
+            <button onClick={async (e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              await fetch(`/mutations/${conversation.id}`, {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json'
+                }
+              })
+            }}>Reset</button>
+          </div>
+          <div className={styles.column}>
+            <div className={styles.pre}>
+  For Each Mutation<br/>
+  <span></span>If PreviousMutation.Origin[ThisMutationAuthor] &gt;= ThisMutation.Origin[ThisMutationAuthor]<br/>
+  <span></span><span></span><i className={styles.comment}>// Shift index on this mutation if necessary</i><br/>
+  <span></span><span></span>If PreviousMutation.Index ToTheLeftOf ThisMutation.Index<br/>
+  <span></span><span></span><span></span>If PreviousMutation.Type = Insert<br/>
+  <span></span><span></span><span></span><span></span>ThisMutation.Index = ThisMutation.Index + PreviousMutation.Test.length<br/>
+  <span></span><span></span><span></span>If PreviousMutation.Type = Delete<br/>
+  <span></span><span></span><span></span><span></span>ThisMutation.Index = ThisMutation.Index - PreviousMutation.Length<br/>
+  <span></span><span></span><i className={styles.comment}>// Adjust the origin on this mutation if necessary</i><br/>
+  <span></span><span></span>If PreviousMutation.Origin[ThisMutationAuthor] == ThisMutation.Origin[ThisMutationAuthor]<br/>
+  <span></span><span></span><span></span>ThisMutation.Origin[ThisMutationAuthor] = PreviousMutation.Origin[ThisMutationAuthor] + 1<br/>
+  <span></span><i className={styles.comment}>// Adjust origin for all other authors if necessary</i><br/>
+  <span></span>For Each OtherAuthor<br/>
+  <span></span><span></span>If PreviousMutation.Origin[OtherAuthor] == ThisMutation.Origin[OtherAuthor]<br/>
+  <span></span><span></span><span></span>ThisMutation.Origin[OtherAuthor] = PreviousMutation.Origin[OtherAuthor] + 1<br/>
+            </div>
           </div>
         </div>
-      </div>
-        
+      }
     </>
   )
 }
