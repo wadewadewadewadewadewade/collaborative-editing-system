@@ -12,7 +12,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           email: 'wadessocool@gmail.com'
         },
         frontend: {
-          url: 'https://collaborative-editing-system.vercel.app/'
+          url: 'https://collaborativeeditingsystem.herokuapp.com/'
         },
         language: 'node.js',
         sources: 'https://github.com/wadewadewadewadewadewade/collaborative-editing-system',
