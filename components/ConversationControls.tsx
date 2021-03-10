@@ -24,12 +24,10 @@ function useStickyState(defaultValue, key) {
 
 export default function ConversationControls({
   id,
-  onDelete,
-  beforeDelete
+  onDelete
 }: {
   id: string,
-  onDelete?: () => void,
-  beforeDelete?: () => void
+  onDelete?: () => void
 }) {
   const favoriteId = `favorite_${id}`;
   const [
@@ -71,7 +69,6 @@ export default function ConversationControls({
           e.preventDefault()
           if (window.confirm('Are you sure you want to delete this?')) {
             setIsLoading(true)
-            beforeDelete && beforeDelete()
             // timeout here because vercel DELETE seem to time out
             fetchWithTimeout(`/conversations/${id}`, {
               method: 'DELETE',

@@ -1,47 +1,64 @@
 import styles from '../styles/Home.module.css'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { io } from 'socket.io-client'
 import { IConversation } from '../utils/db/conversations'
 import TestButton from './TestButton'
+import { AuthorsType, IMutation } from '../utils/db/mutations'
 
 export default function Preformatted({
-  conversation,
-  setMutation,
-  clearPolling
+  conversationJson,
+  author
 } : {
-  conversation: IConversation,
-  setMutation: (mut) => void,
-  clearPolling: (cb: () => void) => void
+  conversationJson: string,
+  author: AuthorsType
 }) {
+  const conversation: IConversation = JSON.parse(conversationJson)
+  const Authors = ['bob', 'alice']
+  const [lastMutation, setLastMutation] = useState(conversation.lastMutation)
   const [displayText, setDisplayText] = useState(conversation.text || '')
+  const [document, setDocument] = useState(conversation.text || '')
   // I'm stil not sure why useEffect displayText doesn't have correct value
   // so I'musing this work-around
-  const testButtonsVisible = false
-  let tempDisplayText = displayText
-  const [document, setDocument] = useState(conversation.text || '')
+  const testButtonsVisible = true
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetch(`/conversations/${conversation.id}`)
-        .then(response => response.json())
-        .then((c: IConversation) => {
-          const adjustedText = c ? c.text || '' : ''
-          if (c && adjustedText !== tempDisplayText) {
-            // console.log('setting conv', adjustedText, displayText, tempDisplayText)
-            setDisplayText(adjustedText)
-            setDocument(adjustedText)
-            tempDisplayText = adjustedText
-            setMutation(JSON.stringify(c.lastMutation, null, 2))
+    const socket = io()
+    fetch('/conversations/socketio').finally(() => {
+      
+      socket.on('connect', () => {
+        socket.emit('watch', conversation.id)
+      })
+
+      socket.on('update', (conversationData: IConversation) => {
+        if (conversationData) {
+          if (conversationData.id === conversation.id) {
+            console.log('updating')
+            setDocument(conversationData.text)
+            setDisplayText(conversationData.text)
+            setLastMutation(conversationData.lastMutation)
           }
-        }).catch((ex) => {
-          clearInterval(interval)
-        })
-    }, 1000)
-    const stopPolling = () => clearInterval(interval)
-    clearPolling(stopPolling) // pass this out to parent for delete
-    return stopPolling
+        }
+      })
+
+      socket.on('disconnect', () => {
+        console.log('disconnect')
+      })
+    })
+    return () => { socket && socket.emit('end') }
   },[conversation.id])
 
-  /* const parse = () => {
-    console.log('parse', {document, displayText})
+  const textAreaRef = useRef<HTMLTextAreaElement>()
+
+  function getCursorPos() {
+    const input = textAreaRef.current
+    try {
+      return input.selectionStart
+    } catch (ex) {
+      console.warn('cannot get cursor position', ex)
+    }
+  }
+
+  const parse = () => {
+    // console.log('parse', {displayText})
     let inserts = null
     let deletes = null
     const first = document.split(' ')
@@ -75,10 +92,34 @@ export default function Preformatted({
       limit--
     }
     if (inserts || deletes) {
-      console.log({inserts, deletes})
-      setDocument(displayText)
+      const nullOrigin = {}
+      Authors.forEach(a => { nullOrigin[a] = 0 })
+      const origin = lastMutation ? lastMutation.origin : nullOrigin
+      const data: IMutation["data"] = {
+        index: getCursorPos(),
+        type: 'delete'
+      }
+      if (typeof data.index !== 'number') {
+        return undefined
+      }
+      if (inserts) {
+        data.type = 'insert'
+        data.text = inserts.word
+      } else {
+        data['length'] = deletes.word.length
+      }
+      const newMutation: IMutation = {
+        author,
+        conversationId: conversation.id,
+        data,
+        origin: {
+          ...origin,
+          [author]: origin[author] + 1
+        }
+      }
+      console.log({newMutation})
     }
-  } */
+  }
 
   const buttons: Array<{
     author: 'bob' | 'alice';
@@ -101,13 +142,14 @@ export default function Preformatted({
     {"author":"alice","data":{"type":"insert","index":0,"text":"THE"},"origin":{"bob":2,"alice":1}},
     {"author":"bob","data":{"type":"insert","index":13,"text":" and blue"},"origin":{"bob":4,"alice":1}}
   ]
+  let timeout = null
 
   return (
     <>
       <textarea
-        defaultValue={displayText}
-        disabled
-        /* onChange={(e) => setDisplayText(e.target.value)}
+        ref={textAreaRef}
+        value={displayText}
+        onChange={(e) => setDisplayText(e.target.value)}
         onKeyUp={(e) => {
           if (timeout) {
             clearTimeout(timeout)
@@ -121,7 +163,7 @@ export default function Preformatted({
               timeout = null
             }
           }
-        }}*/
+        }}
       ></textarea>
       
       {testButtonsVisible && 
@@ -160,6 +202,7 @@ export default function Preformatted({
           </div>
         </div>
       }
+      <pre className={styles.preformatted} data-title="Last mutation">{JSON.stringify(lastMutation, null, 2)}</pre>
     </>
   )
 }

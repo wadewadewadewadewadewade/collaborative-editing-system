@@ -162,6 +162,12 @@ h2 .controls {
   font-size: 12pt;
 }
 
+.author { 
+  font-size: 20pt;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
 .buttonBack {
   font-size: 30pt;
 }

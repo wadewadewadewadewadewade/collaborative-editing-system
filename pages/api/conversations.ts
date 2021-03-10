@@ -14,7 +14,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       try {
         const conversations = await getConversations(db)
         conversations.forEach(async (conversation) => {
-          console.log(conversation.id)
           const conversationRef = db.collection('conversations').doc(conversation.id)
           await deleteMutationsWithinConversation(db, conversationRef, 1000)
         })

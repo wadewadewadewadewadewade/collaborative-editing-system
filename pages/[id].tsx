@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import Head from 'next/head'
 import dynamic from 'next/dynamic'
 import BackButton from '../components/BackButton'
@@ -8,6 +7,9 @@ import { useRouter } from 'next/router'
 import db from '../utils/db'
 import Preformatted from '../components/Preformatted'
 import { getConversation, getConversations, IConversation, IConversations } from '../utils/db/conversations'
+import { AuthorsType } from '../utils/db/mutations'
+import Select from 'react-select'
+import { useState } from 'react'
 
 const ConversationControls = dynamic(() => import('../components/ConversationControls'))
 
@@ -35,8 +37,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     props: {
       conversation
     },
-    revalidate: 1,
-    unstable_revalidate: 1
+    revalidate: 1
   }
 }
 
@@ -45,28 +46,16 @@ export default function Conversation({
 }: {
   conversation: IConversation
 }) {
+  const Authors = ['bob','alice'] // importing this from Mutations wasn't working for some reason
   const router = useRouter()
+  const [author, setAuthor] = useState<AuthorsType>('bob')
+  const authorOptions = (name) => ({
+    value: name,
+    label: name.substring(0,1)
+  })
   if (router.isFallback) {
     return <div>Loading...</div>
   }
-  const [mutation, setMutation] = useState(JSON.stringify(conversation.lastMutation, null, 2))
-  /*useEffect(() => {
-    const evtSource = new EventSource(`/api/conversations/sockets/${conversation.id}`)
-    evtSource.onmessage = function(event) {
-      const newText = JSON.parse(event.data).text
-      if (newText !== conversation.text) {
-        setTextDisplay(newText)
-      }
-    }
-    evtSource.onerror = function(err) {
-      console.error("EventSource failed:", err)
-    }
-    window && window.addEventListener('beforeunload', () => evtSource.close())
-    return () => {
-      evtSource.close()
-    }
-  },[conversation.id])*/
-  let stopPolling = () => {}
   return (
     <div className={styles.container}>
       
@@ -83,17 +72,25 @@ export default function Conversation({
         <h2 className={styles.subtitle}>
           <BackButton />
           <span>Conversation</span>
-          <ConversationControls id={conversation.id} beforeDelete={stopPolling} onDelete={() => {
-            router.push('/')
-          }} />
+          <ConversationControls
+            id={conversation.id}
+            onDelete={() => {
+              router.push('/')
+            }}
+          />
+          {/*
+          <Select
+            className={styles.author}
+            value={authorOptions(author)}
+            options={Authors.map(authorOptions)}
+            onChange={(option) => {
+              setAuthor(option.value)
+            }}
+          />
+          */}
         </h2>
         
-        <Preformatted
-          clearPolling={(cb) => stopPolling = cb}
-          conversation={conversation}
-          setMutation={setMutation}
-        />
-        <pre className={styles.preformatted} data-title="Last mutation">{mutation}</pre>
+        <Preformatted author={author} conversationJson={JSON.stringify(conversation)} />
 
       </main>
 

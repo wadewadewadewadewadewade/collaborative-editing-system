@@ -2,12 +2,21 @@ import admin from 'firebase-admin'
 import { addConversation } from './conversations';
 import { deleteQueryBatch, getKeyByVisibleId, addKey } from './index'
 
-const authors = ['bob', 'alice'] // so we can have unlimited authors
+function stringLiterals<T extends string>(...args: T[]): T[] { return args; }
+type ElementType<T extends ReadonlyArray<unknown>> = T extends ReadonlyArray<infer ElementType> ? ElementType : never;
+
+export const Authors = ['bob', 'alice'] // so we can have unlimited authors
+const values = stringLiterals(...Authors)
+type ValuesOf<T extends any[]>= T[number]
+export type AuthorsType = ElementType<typeof values>
+export type OriginType = {
+  [k in ValuesOf<typeof values>]: number
+}
 
 export interface IMutation {
   id?: string,
   created?: string
-  author: 'alice' | 'bob'
+  author: AuthorsType
   conversationId: string
   data: {
     index: number
@@ -15,10 +24,7 @@ export interface IMutation {
     length?: number // insert has no length
     type: 'insert' | 'delete'
   }
-  origin: {
-    alice: number,
-    bob: number
-  }
+  origin: OriginType
 }
 
 export async function getConversationText(mutations: Array<IMutation>) {
@@ -106,7 +112,7 @@ function parseMutations(mutationsList: Array<IMutation>, conversationRef?: Fireb
     let modifiedThisMutation = false
     const mutation = mutationsList[i]
     const thisAuthor = mutation.author
-    const otherAuthors = authors.filter(a=>a!==thisAuthor)
+    const otherAuthors = Authors.filter(a=>a!==thisAuthor)
     if (previousMutation.origin[thisAuthor] >= mutation.origin[thisAuthor]) {
       if (mutation.data.index >= previousMutation.data.index) {
         if (previousMutation.data.type === 'insert') {
