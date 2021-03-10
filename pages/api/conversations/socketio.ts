@@ -3,6 +3,8 @@ import { getKeyByVisibleId } from '../../../utils/db';
 import { Server } from 'socket.io'
 import db from '../../../utils/db'
 
+const unsubscribe: {[conversationId: string]: () => void} = {}
+
 const ioHandler = (req: any, res: any) => {
   if (!res.socket.server.io) {
     console.log('*First use, starting socket.io')
@@ -10,13 +12,11 @@ const ioHandler = (req: any, res: any) => {
     const io = new Server(res.socket.server)
 
     io.on('connection', socket => {
-      let unsubscribe = null
-      let key = null
       
       socket.on('watch', async (conversationId: string) => {
-        key = await getKeyByVisibleId(db, conversationId)
+        const key = await getKeyByVisibleId(db, conversationId)
         if (key) {
-          unsubscribe = db.collection('conversations').doc(key.conversationId).onSnapshot((snapshot) => {
+          unsubscribe[key.conversationId] = db.collection('conversations').doc(key.conversationId).onSnapshot((snapshot) => {
             const conversation = {...snapshot.data(), id: conversationId}
             socket.broadcast.emit('update', conversation)
           })
@@ -24,13 +24,20 @@ const ioHandler = (req: any, res: any) => {
       })
 
       socket.on('update', async (mutation: IMutation) => {
-        if (mutation && key) {
-          addMutation(db, key.conversationId, mutation)
+        if (mutation) {
+          const key = await getKeyByVisibleId(db, mutation.conversationId)
+          if (key) {
+            addMutation(db, key.conversationId, mutation)
+          }
         }
       })
 
-      socket.on('end', () => {
-        unsubscribe && unsubscribe()
+      socket.on('end', async (visible: string) => {
+        const key = await getKeyByVisibleId(db, visible)
+        if (key && unsubscribe[key.conversationId]) {
+          unsubscribe[key.conversationId]()
+          delete unsubscribe[key.conversationId]
+        }
       })
     })
 

@@ -4,6 +4,7 @@ import { io } from 'socket.io-client'
 import { IConversation } from '../utils/db/conversations'
 import TestButton from './TestButton'
 import { AuthorsType, IMutation } from '../utils/db/mutations'
+import { Router, useRouter } from 'next/router'
 
 export default function Preformatted({
   conversationJson,
@@ -12,6 +13,7 @@ export default function Preformatted({
   conversationJson: string,
   author: AuthorsType
 }) {
+  const router = useRouter()
   const conversation: IConversation = JSON.parse(conversationJson)
   const Authors = ['bob', 'alice']
   const [lastMutation, setLastMutation] = useState(conversation.lastMutation)
@@ -19,10 +21,10 @@ export default function Preformatted({
   const [document, setDocument] = useState(conversation.text || '')
   // I'm stil not sure why useEffect displayText doesn't have correct value
   // so I'musing this work-around
-  const testButtonsVisible = true
+  const testButtonsVisible = router.query.testbuttons === 'true'
   useEffect(() => {
     const socket = io()
-    fetch('/conversations/socketio').finally(() => {
+    fetch('/conversations/socketio', {cache: "no-store"}).finally(() => {
       
       socket.on('connect', () => {
         socket.emit('watch', conversation.id)
@@ -31,7 +33,6 @@ export default function Preformatted({
       socket.on('update', (conversationData: IConversation) => {
         if (conversationData) {
           if (conversationData.id === conversation.id) {
-            console.log('updating')
             setDocument(conversationData.text)
             setDisplayText(conversationData.text)
             setLastMutation(conversationData.lastMutation)
@@ -40,10 +41,11 @@ export default function Preformatted({
       })
 
       socket.on('disconnect', () => {
-        console.log('disconnect')
+        console.warn('socket disconnected')
+        router.push('/')
       })
     })
-    return () => { socket && socket.emit('end') }
+    return () => { socket && socket.emit('end', conversation.id) }
   },[conversation.id])
 
   const textAreaRef = useRef<HTMLTextAreaElement>()
